@@ -1,10 +1,22 @@
 package cl.sanaesencia.app.domain.model
 
-class Paciente(
+data class Paciente(
     val id: Int,
-    var pnombre: String,
-    var snombre: String?,
-    var appaterno: String,
-    var apmaterno: String
+    val rut: String, // INVESTIGAR LEY DE PROTECCIÓN DE DATOS. NO CREO QUE PODAMOS USAR EL RUT
+    val primerNombre: String,
+    val segundoNombre: String? = null,
+    val apellidoPaterno: String,
+    val apellidoMaterno: String,
+
+    val email: String,
+    val telefono: String,
+    val fechaNacimiento: String? = null // CONSIDERAR USO DE DATE, SOLO INTERESA LA FECHA, NO HORAS.
 ) {
+    val nombreCompleto: String
+        get() = listOfNotNull(primerNombre, segundoNombre, apellidoPaterno, apellidoMaterno)
+            .filter { it.isNotBlank() }
+            .joinToString(" ")
+
+    val nombreCorto: String
+        get() = "$primerNombre $apellidoPaterno $apellidoMaterno"
 }
