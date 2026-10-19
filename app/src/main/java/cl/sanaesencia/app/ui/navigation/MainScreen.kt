@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -16,6 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import cl.sanaesencia.app.ui.citas.AgendarCitaScreen
+import cl.sanaesencia.app.ui.citas.CitaViewModel
 import cl.sanaesencia.app.ui.citas.CitasScreen
 import cl.sanaesencia.app.ui.especialistas.EspecialistasScreen
 import cl.sanaesencia.app.ui.perfil.PerfilScreen
@@ -23,7 +25,8 @@ import cl.sanaesencia.app.ui.productos.ProductosScreen
 
 @Composable
 fun MainScreen(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    citaViewModel: CitaViewModel = viewModel()
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -38,12 +41,14 @@ fun MainScreen(
                         NavigationBarItem(
                             selected = currentRoute == screen.route,
                             onClick = {
-                                navController.navigate(screen.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                                if (currentRoute != screen.route) {
+                                    navController.navigateSafe(screen.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
                                 }
                             },
                             icon = {
@@ -68,13 +73,15 @@ fun MainScreen(
         ) {
             composable(Screen.Citas.route) {
                 CitasScreen(
+                    viewModel = citaViewModel,
                     onAgendarCitaClick = {
-                        navController.navigate(Screen.AgendarCita.route)
+                        navController.navigateSafe(Screen.AgendarCita.route)
                     }
                 )
             }
             composable(Screen.AgendarCita.route) {
                 AgendarCitaScreen(
+                    viewModel = citaViewModel,
                     onVolverClick = {
                         navController.popBackStack()
                     }
