@@ -3,6 +3,10 @@ package cl.sanaesencia.app.data.repository
 import cl.sanaesencia.app.domain.model.Producto
 import cl.sanaesencia.app.domain.repository.ProductoRepository
 
+/**
+ * Implementación de prueba (Mock / En Memoria) para el catálogo de Productos e Insumos.
+ * Utilizada durante la fase de desarrollo del MVP.
+ */
 class MockProductoRepository : ProductoRepository {
 
     private val productos = mutableListOf(

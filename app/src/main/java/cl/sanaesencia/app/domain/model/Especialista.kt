@@ -1,23 +1,24 @@
 package cl.sanaesencia.app.domain.model
 
-/*
-* TODO:
-*   Desarrollar una data class de especialidades, ya que en relaciones, un Especialista tiene una
-*       o varias especialidades
-*   Especialides impartidas por el centro integrativo:
-*       - Psicología
-*       - Terapia ocupacional
-*       - Fonoaudiología
-*       - Psicopedagogía
-*       - Nutrición
-*       - Matrona
-*       - Quiropraxia
-*       - Masajes
-*       - Evaluaciones del neurodesarrollo
-*       - Terapia flotar
-*       - Aromaterapia
-* */
-
+/**
+ * Representa a un profesional o especialista que imparte atenciones en Sanaesencia.
+ *
+ * TODO (Módulo Especialistas):
+ *  1. Desarrollar una data class o Enum 'Especialidad' si un profesional maneja
+ *     múltiples especialidades (List<Especialidad>).
+ *  2. Especialidades impartidas por el centro integrativo:
+ *      - Psicología
+ *      - Terapia Ocupacional
+ *      - Fonoaudiología
+ *      - Psicopedagogía
+ *      - Nutrición
+ *      - Matrona
+ *      - Quiropraxia
+ *      - Masoterapia / Masajes
+ *      - Evaluaciones del Neurodesarrollo
+ *      - Terapia Floral
+ *      - Aromaterapia
+ */
 data class Especialista(
     val id: Int,
     val primerNombre: String,
