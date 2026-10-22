@@ -7,6 +7,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+/**
+ * Pantalla principal del Catálogo de Productos y Insumos de Sanaesencia.
+ *
+ * TODO (Integrante asignado al Módulo Productos):
+ *  1. Crear `ProductoViewModel.kt` en este paquete (`cl.sanaesencia.app.ui.productos`)
+ *     utilizando `MockProductoRepository`.
+ *  2. Definir la data class `ProductosUiState` (con lista de productos, filtro por categoría temática,
+ *     búsqueda por texto y estado de carga).
+ *  3. Diseñar cuadrícula o lista de productos (`ProductoCard`) mostrando:
+ *     - Nombre del producto e imagen/icono.
+ *     - Categoría temática (Aromaterapia, Masajes, Florales, Kinesiología).
+ *     - Precio en CLP formateado y stock disponible.
+ *     - Botón de acción: "Ver Detalle" o "Consultar Disponibilidad".
+ *  4. Implementar barra de búsqueda y filtros por categoría temática.
+ */
 @Composable
 fun ProductosScreen() {
     Column(

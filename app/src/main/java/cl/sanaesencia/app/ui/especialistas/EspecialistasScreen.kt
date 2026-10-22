@@ -7,6 +7,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+/**
+ * Pantalla principal del Catálogo de Especialistas de Sanaesencia.
+ *
+ * TODO (Integrante asignado al Módulo Especialistas):
+ *  1. Crear `EspecialistaViewModel.kt` en este paquete (`cl.sanaesencia.app.ui.especialistas`)
+ *     utilizando `MockEspecialistaRepository`.
+ *  2. Definir la data class `EspecialistasUiState` (con lista de especialistas, filtro por especialidad,
+ *     estado de carga y mensajes).
+ *  3. Diseñar tarjetas para cada profesional (`EspecialistaCard`) mostrando:
+ *     - Nombre completo (`especialista.nombreCompleto`).
+ *     - Especialidad e icono representativo.
+ *     - Descripción breve o biografía.
+ *     - Botón de acción: "Agendar Cita con este Profesional".
+ *  4. Implementar barra de búsqueda o chips de filtro por especialidad (ej. Psicología, Quiropraxia, etc.).
+ */
 @Composable
 fun EspecialistasScreen() {
     Column(

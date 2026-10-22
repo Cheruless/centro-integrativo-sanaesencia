@@ -3,6 +3,10 @@ package cl.sanaesencia.app.data.repository
 import cl.sanaesencia.app.domain.model.Especialista
 import cl.sanaesencia.app.domain.repository.EspecialistaRepository
 
+/**
+ * Implementación de prueba (Mock / En Memoria) para el catálogo de Especialistas.
+ * Utilizada durante la fase de desarrollo del MVP.
+ */
 class MockEspecialistaRepository : EspecialistaRepository {
 
     private val especialistas = mutableListOf(

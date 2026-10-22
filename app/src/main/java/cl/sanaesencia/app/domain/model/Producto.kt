@@ -1,20 +1,15 @@
 package cl.sanaesencia.app.domain.model
 
-//TODO:
-//  ECHAR UN VISTAZO AL SITIO WEB OFICIAL DE sanaesencia Y AVERIGUAR SUS PRODUCTOS.
-//  CONSIDERAR CREAR UNA CLASE PARA CATEGORIZAR ESTOS PRODUCTOS O SI SOLO DEBE SER UN STRING Y YA.
-
-/*
- *  Pensaba que tal vez se pueda considerar productos relacionados a una especialidad ""temática"".
- *  Ejemplo, productos que tengan como un tag para aroma terapia.
- *  Productos relacionados a masajes.
- *  Un producto puede estar relacionado a varias especialidades, puede darse el caso
-*/
-
 /**
  * Representa un producto o insumo comercializado en la clínica Sanaesencia.
  * Los productos se asocian a categorías o especialidades temáticas
  * (ej: Aromaterapia, Masoterapia, Terapia Floral, Cuidado Personal).
+ *
+ * TODO (Módulo Productos):
+ *  1. Evaluar si un producto requiere múltiples etiquetas/tags (List<String>) si está
+ *     asociado a más de una especialidad temática.
+ *  2. Considerar la creación de una data class o Enum 'CategoriaProducto' para
+ *     facilitar el filtrado en la interfaz de usuario.
  */
 data class Producto(
     val id: Int,
