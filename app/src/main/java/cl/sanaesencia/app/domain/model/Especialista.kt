@@ -1,5 +1,8 @@
 package cl.sanaesencia.app.domain.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
 /**
  * Representa a un profesional o especialista que imparte atenciones en Sanaesencia.
  *
@@ -19,8 +22,10 @@ package cl.sanaesencia.app.domain.model
  *      - Terapia Floral
  *      - Aromaterapia
  */
+@Entity(tableName = "especialistas")
 data class Especialista(
-    val id: Int,
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0, // Le asignamos 0 por defecto para que Room lo autogenere
     val primerNombre: String,
     val segundoNombre: String? = null,
     val apellidoPaterno: String,
