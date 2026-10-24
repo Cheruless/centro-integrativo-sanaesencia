@@ -72,7 +72,3 @@ Paso 1: Especialidad → Paso 2: Resultados → Paso 3: Confirmar → Pago (mock
 ```bash
 ./gradlew :app:assembleDebug
 ```
-
-## Autor
-
-**Exequiel Pulgar** — DuocUC, Desarrollo de Aplicaciones Móviles.
