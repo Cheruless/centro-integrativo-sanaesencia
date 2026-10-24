@@ -1,15 +1,13 @@
 package cl.sanaesencia.app.domain.model
 
 /**
- * Catálogo fijo de especialidades del centro integrativo Sanaesencia.
- * Cada especialidad define su precio base, la duración de sesión en bloques
- * de 30 min y una breve descripción informativa.
- * @author Exequiel
+ * Catálogo de especialidades del centro. Cada una define su precio,
+ * cuántos bloques de 30 min dura la sesión y una descripción corta.
  */
 enum class Especialidad(
     val displayName: String,
     val precioBase: Double,
-    val bloquesPorSesion: Int, // 1 = 30 min, 2 = 60 min
+    val bloquesPorSesion: Int,
     val descripcion: String
 ) {
     PSICOLOGIA(

@@ -4,8 +4,8 @@ import cl.sanaesencia.app.domain.model.Producto
 import cl.sanaesencia.app.domain.repository.ProductoRepository
 
 /**
- * Implementación de prueba (Mock / En Memoria) para el catálogo de Productos e Insumos.
- * Utilizada durante la fase de desarrollo del MVP.
+ * Repositorio mock de productos. Contiene 5 productos de prueba
+ * asociados a distintas especialidades del centro.
  */
 class MockProductoRepository : ProductoRepository {
 
@@ -45,7 +45,7 @@ class MockProductoRepository : ProductoRepository {
         Producto(
             id = 5,
             nombre = "Banda Elástica Terapéutica Kinesiológica",
-            descripcion = "Banda de resistencia media para ejercicios kinesiológicos de fortalecimiento muscular.",
+            descripcion = "Banda de resistencia media para ejercicios de fortalecimiento muscular.",
             precio = 8990.0,
             categoriaEspecialidad = "Kinesiología Holística",
             stock = 12

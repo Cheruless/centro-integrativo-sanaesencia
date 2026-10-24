@@ -26,6 +26,10 @@ import androidx.compose.ui.unit.dp
 import cl.sanaesencia.app.domain.model.Cita
 import cl.sanaesencia.app.domain.model.EstadoCita
 
+/**
+ * Pantalla principal: lista de citas del paciente con filtros por estado.
+ * Acciones disponibles: agendar nueva cita, confirmar pendientes (pago mock) y cancelar.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CitasScreen(
@@ -226,6 +230,10 @@ fun CitasScreen(
     }
 }
 
+/**
+ * Tarjeta de una cita: muestra fecha, hora, servicio, especialista, precio y estado.
+ * En estado PENDIENTE ofrece botones Confirmar y Cancelar.
+ */
 @Composable
 fun CitaCard(
     cita: Cita,
@@ -343,6 +351,7 @@ fun CitaCard(
     }
 }
 
+/** Chip de color con icono que representa el estado de la cita (Pendiente, Confirmada, etc.). */
 @Composable
 fun EstadoChip(estado: EstadoCita) {
     val (bgColor, textColor, label, icon) = when (estado) {

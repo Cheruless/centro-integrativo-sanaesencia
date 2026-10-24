@@ -29,6 +29,10 @@ import cl.sanaesencia.app.ui.especialistas.EspecialistasScreen
 import cl.sanaesencia.app.ui.perfil.PerfilScreen
 import cl.sanaesencia.app.ui.productos.ProductosScreen
 
+/**
+ * Contenedor principal con NavHost y barra de navegación inferior.
+ * Gestiona las rutas de citas, especialistas, productos, perfil y el flujo de agendamiento.
+ */
 @Composable
 fun MainScreen(
     navController: NavHostController = rememberNavController(),

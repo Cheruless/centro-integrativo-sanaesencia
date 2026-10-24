@@ -213,6 +213,7 @@ fun AgendarPaso2Screen(
     }
 }
 
+/** Card de especialista seleccionable. Muestra nombre y especialidades; resalta si está elegido. */
 @Composable
 private fun EspecialistaSelectCard(
     especialista: Especialista,

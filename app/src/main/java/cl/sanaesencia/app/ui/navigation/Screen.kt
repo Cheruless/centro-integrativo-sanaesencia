@@ -7,6 +7,10 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.ui.graphics.vector.ImageVector
 
+/**
+ * Define las rutas de navegación de la app. Cada objeto es una pantalla
+ * con su ruta, título y icono opcional para la barra inferior.
+ */
 sealed class Screen(
     val route: String,
     val title: String,

@@ -4,8 +4,8 @@ import cl.sanaesencia.app.domain.model.Paciente
 import cl.sanaesencia.app.domain.repository.PacienteRepository
 
 /**
- * Implementación de prueba (Mock / En Memoria) para la gestión del perfil del Paciente.
- * Utilizada durante la fase de desarrollo del MVP.
+ * Repositorio mock del paciente. En el MVP hay un único
+ * paciente de prueba pre-cargado.
  */
 class MockPacienteRepository : PacienteRepository {
 

@@ -7,6 +7,10 @@ import cl.sanaesencia.app.domain.repository.CitaRepository
 import java.time.LocalDate
 import java.time.LocalTime
 
+/**
+ * Repositorio mock de citas en memoria. Maneja creación,
+ * cancelación y cambios de estado (confirmar/pagar).
+ */
 class MockCitaRepository(
     especialistaRepo: MockEspecialistaRepository = MockEspecialistaRepository(),
     pacienteRepo: MockPacienteRepository = MockPacienteRepository()

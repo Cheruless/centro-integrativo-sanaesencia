@@ -23,9 +23,7 @@ import java.time.LocalTime
 import java.time.YearMonth
 
 /**
- * Mantiene el listado de citas, estados de carga, mensajes de éxito/error y
- * filtro por estado de cita.
- * @author Exequiel
+ * Estado del listado de citas: datos, carga, mensajes y filtro por estado.
  */
 data class CitasUiState(
     val citas: List<Cita> = emptyList(),
@@ -36,51 +34,44 @@ data class CitasUiState(
 )
 
 /**
- * Estado del formulario de agendamiento. Los listados derivados se recalculan
- * en cada mutador a partir de la selección actual.
- * @author Exequiel
+ * Estado del formulario de agendamiento. Incluye la selección del usuario
+ * y los listados derivados que se recalculan en cada mutador.
  */
 data class AgendarCitaFormState(
-    // --- selección del usuario ---
     val especialidad: Especialidad? = null,
     val especialistaSeleccionado: Especialista? = null,
     val fecha: LocalDate? = null,
     val hora: LocalTime? = null,
     val notas: String = "",
     val searchQuery: String = "",
-
-    // --- calendario ---
     val mesVisible: YearMonth = YearMonth.now(),
-
-    // --- derivados (siempre consistentes con la selección) ---
     val especialidadesVisibles: List<Especialidad> = Especialidad.entries,
     val especialistasFiltrados: List<Especialista> = emptyList(),
     val especialistasBusqueda: List<Especialista> = emptyList(),
     val bloquesDisponibles: List<Horario> = emptyList(),
     val bloquesPorEspecialista: Map<Int, List<Horario>> = emptyMap(),
     val diasConDisponibilidad: Set<LocalDate> = emptySet(),
-
-    // --- precio / sesión ---
     val precio: Double? = null,
     val duracionMinutos: Int? = null,
-
-    // --- preselección desde EspecialistasScreen ---
     val especialistaPreseleccionadoId: Int? = null,
-
-    // --- UI / submit ---
     val isSubmitting: Boolean = false,
     val formError: String? = null,
     val isAgendadoExitoso: Boolean = false
 )
 
-/** Estado del mock de pago. */
+/** Estados del mock de pago. */
 enum class EstadoPago { INACTIVO, PROCESANDO, EXITOSO }
 
+/** Estado de la pantalla de procesamiento de pago. */
 data class PagoUiState(
     val citaId: Int? = null,
     val estado: EstadoPago = EstadoPago.INACTIVO
 )
 
+/**
+ * ViewModel principal de citas. Gestiona el listado, el formulario
+ * de agendamiento en 3 pasos, el motor de disponibilidad y el pago mock.
+ */
 class CitaViewModel(
     private val citaRepository: CitaRepository = MockCitaRepository(),
     private val especialistaRepository: EspecialistaRepository = MockEspecialistaRepository(),
@@ -105,6 +96,7 @@ class CitaViewModel(
 
     // --- Listado de citas ---
 
+    /** Carga las citas desde el repositorio al estado de UI. */
     fun cargarCitas() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
@@ -113,10 +105,12 @@ class CitaViewModel(
         }
     }
 
+    /** Filtra el listado por estado (Todas / Confirmadas / Pendientes). */
     fun setFiltroEstado(estado: EstadoCita?) {
         _uiState.update { it.copy(filtroEstado = estado) }
     }
 
+    /** Cancela una cita y recarga el listado. */
     fun cancelarCita(idCita: Int) {
         viewModelScope.launch {
             val exito = citaRepository.cancelarCita(idCita)
@@ -129,6 +123,7 @@ class CitaViewModel(
         }
     }
 
+    /** Limpia los mensajes de éxito/error del snackbar. */
     fun limpiarMensajes() {
         _uiState.update { it.copy(mensajeExito = null, mensajeError = null) }
     }
@@ -136,9 +131,8 @@ class CitaViewModel(
     // --- Formulario de agendamiento ---
 
     /**
-     * Resetea el formulario. Si [especialistaPreseleccionadoId] no es nulo,
+     * Resetea el formulario. Si se pasa un [especialistaPreseleccionadoId],
      * precarga ese profesional y limita las especialidades visibles a las suyas.
-     * @author Exequiel
      */
     fun iniciarFormulario(especialistaPreseleccionadoId: Int? = null) {
         var state = AgendarCitaFormState()
@@ -154,6 +148,7 @@ class CitaViewModel(
         _formState.value = recalcularDerivados(state)
     }
 
+    /** Selecciona la especialidad y limpia la hora. */
     fun onEspecialidadChange(nueva: Especialidad?) {
         _formState.update { prev ->
             var next = prev.copy(
@@ -171,13 +166,13 @@ class CitaViewModel(
         }
     }
 
+    /**
+     * Selecciona un especialista. Si la fecha actual no es compatible
+     * con sus días de atención, la limpia junto con la hora.
+     */
     fun onEspecialistaSeleccionado(especialista: Especialista) {
         _formState.update { prev ->
-            var next = prev.copy(
-                especialistaSeleccionado = especialista,
-                formError = null
-            )
-            // Si la fecha actual no es compatible con el nuevo especialista, limpiar fecha+hora.
+            var next = prev.copy(especialistaSeleccionado = especialista, formError = null)
             val fecha = next.fecha
             if (fecha != null && !especialista.atiendeEn(fecha.dayOfWeek)) {
                 next = next.copy(fecha = null, hora = null)
@@ -197,10 +192,13 @@ class CitaViewModel(
         }
     }
 
+    /**
+     * Selecciona un día del calendario. Si el especialista elegido
+     * no atiende ese día, se deselecciona.
+     */
     fun onFechaChange(nuevaFecha: LocalDate?) {
         _formState.update { prev ->
             var next = prev.copy(fecha = nuevaFecha, hora = null, formError = null)
-            // Si el especialista seleccionado no atiende ese día, limpiarlo.
             val esp = next.especialistaSeleccionado
             if (esp != null && nuevaFecha != null && !esp.atiendeEn(nuevaFecha.dayOfWeek)) {
                 next = next.copy(especialistaSeleccionado = null)
@@ -209,16 +207,19 @@ class CitaViewModel(
         }
     }
 
+    /** Selecciona un bloque horario disponible. */
     fun onHoraChange(nuevaHora: LocalTime?) {
         _formState.update { prev ->
             recalcularDerivados(prev.copy(hora = nuevaHora, formError = null))
         }
     }
 
+    /** Actualiza las notas opcionales de la cita. */
     fun onNotasChange(nuevasNotas: String) {
         _formState.update { it.copy(notas = nuevasNotas) }
     }
 
+    /** Filtra especialistas por nombre (búsqueda en Paso 1). */
     fun onSearchQueryChange(query: String) {
         _formState.update { prev ->
             val next = prev.copy(searchQuery = query, formError = null)
@@ -230,23 +231,16 @@ class CitaViewModel(
         }
     }
 
-    /**
-     * Limpia especialista, fecha y hora. Mantiene la especialidad seleccionada.
-     * @author Exequiel
-     */
+    /** Limpia especialista, fecha y hora. Mantiene la especialidad seleccionada. */
     fun onBorrarSeleccion() {
         _formState.update { prev ->
             recalcularDerivados(
-                prev.copy(
-                    especialistaSeleccionado = null,
-                    fecha = null,
-                    hora = null,
-                    formError = null
-                )
+                prev.copy(especialistaSeleccionado = null, fecha = null, hora = null, formError = null)
             )
         }
     }
 
+    /** Cambia el mes visible del calendario sin perder la fecha seleccionada. */
     fun onMesChange(nueva: YearMonth) {
         _formState.update { prev ->
             recalcularDerivados(prev.copy(mesVisible = nueva))
@@ -256,9 +250,8 @@ class CitaViewModel(
     // --- Acciones de Paso 3 ---
 
     /**
-     * Crea la cita en estado PENDIENTE y notifica con la fecha corta.
-     * @return id de la cita creada, o null si la validación falló.
-     * @author Exequiel
+     * Crea la cita en estado PENDIENTE y muestra la notificación de agendada.
+     * @return id de la cita, o null si la validación falló.
      */
     fun agendarCita(): Int? {
         val id = crearCita() ?: return null
@@ -270,10 +263,8 @@ class CitaViewModel(
     }
 
     /**
-     * Crea la cita en estado PENDIENTE sin notificación de agendada.
-     * Usado por "Confirmar y pagar" — la notificación viene del pago.
-     * @return id de la cita creada para navegar a ProcesandoPago.
-     * @author Exequiel
+     * Crea la cita en PENDIENTE sin notificación de agendada.
+     * Se usa con "Confirmar y pagar" — la notificación viene del pago.
      */
     fun agendarParaPago(): Int? = crearCita()
 
@@ -311,16 +302,11 @@ class CitaViewModel(
 
         return if (id != null) {
             cargarCitas()
-            _formState.update {
-                it.copy(isSubmitting = false, isAgendadoExitoso = true, formError = null)
-            }
+            _formState.update { it.copy(isSubmitting = false, isAgendadoExitoso = true, formError = null) }
             id
         } else {
             _formState.update {
-                it.copy(
-                    isSubmitting = false,
-                    formError = "Error al agendar la cita. Inténtalo de nuevo."
-                )
+                it.copy(isSubmitting = false, formError = "Error al agendar la cita. Inténtalo de nuevo.")
             }
             null
         }
@@ -333,40 +319,43 @@ class CitaViewModel(
 
     // --- Pago mock ---
 
+    /** Inicia el procesamiento de pago para una cita. */
     fun iniciarPago(citaId: Int) {
         _pagoState.value = PagoUiState(citaId = citaId, estado = EstadoPago.PROCESANDO)
     }
 
+    /** Completa el pago: cambia la cita a CONFIRMADA y notifica al usuario. */
     fun completarPago() {
         val citaId = _pagoState.value.citaId ?: return
         val exito = citaRepository.pagarCita(citaId)
         if (exito) {
             _pagoState.update { it.copy(estado = EstadoPago.EXITOSO) }
-            _uiState.update {
-                it.copy(mensajeExito = "Se ha confirmado tu cita exitosamente")
-            }
+            _uiState.update { it.copy(mensajeExito = "Se ha confirmado tu cita exitosamente") }
             cargarCitas()
         } else {
             _pagoState.update { it.copy(estado = EstadoPago.EXITOSO) }
-            _uiState.update {
-                it.copy(mensajeError = "No se pudo procesar el pago.")
-            }
+            _uiState.update { it.copy(mensajeError = "No se pudo procesar el pago.") }
         }
     }
 
+    /** Resetea el estado del pago a INACTIVO. */
     fun limpiarPago() {
         _pagoState.value = PagoUiState()
     }
 
     // --- Motor de disponibilidad ---
 
+    /**
+     * Recalcula todos los listados derivados (especialidades visibles,
+     * especialistas filtrados, bloques libres, días con disponibilidad)
+     * a partir de la selección actual.
+     */
     private fun recalcularDerivados(prev: AgendarCitaFormState): AgendarCitaFormState {
         val citas = citaRepository.getCitas()
         val especialidad = prev.especialidad
         val especialista = prev.especialistaSeleccionado
         val fecha = prev.fecha
 
-        // Si hay preselección, limitar especialidades visibles a las del especialista.
         val especialidadesVisibles =
             if (prev.especialistaPreseleccionadoId != null) {
                 prev.especialistaSeleccionado?.especialidades ?: Especialidad.entries.toList()
@@ -411,6 +400,10 @@ class CitaViewModel(
         )
     }
 
+    /**
+     * Calcula los bloques horarios libres de un especialista en una fecha,
+     * considerando los bloques ocupados por citas existentes.
+     */
     private fun bloquesDisponiblesDe(
         esp: Especialista,
         especialidad: Especialidad,
@@ -428,6 +421,10 @@ class CitaViewModel(
         }
     }
 
+    /**
+     * Devuelve los índices de bloques ocupados por citas no canceladas
+     * de un especialista en una fecha dada.
+     */
     private fun bloquesOcupadosIndices(
         especialistaId: Int,
         fecha: LocalDate,
@@ -451,6 +448,10 @@ class CitaViewModel(
         return ocupados
     }
 
+    /**
+     * Calcula qué días del mes tienen al menos un bloque libre,
+     * para los indicadores del calendario.
+     */
     private fun diasConDisponibilidadDelMes(
         mes: YearMonth,
         especialidad: Especialidad?,

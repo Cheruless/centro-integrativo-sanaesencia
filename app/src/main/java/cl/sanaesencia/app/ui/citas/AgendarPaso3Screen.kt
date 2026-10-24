@@ -216,6 +216,7 @@ fun AgendarPaso3Screen(
     }
 }
 
+/** Fila de texto etiqueta–valor para el resumen de la cita. */
 @Composable
 private fun DetalleFila(etiqueta: String, valor: String) {
     Row(

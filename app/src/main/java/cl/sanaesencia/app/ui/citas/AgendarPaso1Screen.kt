@@ -125,6 +125,7 @@ fun AgendarPaso1Screen(
     }
 }
 
+/** Card de especialidad con nombre, descripción, duración y precio. Resaltada si está seleccionada. */
 @Composable
 private fun EspecialidadCard(
     especialidad: Especialidad,

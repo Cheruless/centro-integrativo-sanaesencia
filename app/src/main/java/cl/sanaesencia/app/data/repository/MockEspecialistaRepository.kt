@@ -6,8 +6,8 @@ import cl.sanaesencia.app.domain.repository.EspecialistaRepository
 import java.time.DayOfWeek
 
 /**
- * Implementación de prueba (Mock / En Memoria) para el catálogo de Especialistas.
- * Utilizada durante la fase de desarrollo del MVP.
+ * Repositorio mock de especialistas con datos de prueba en memoria.
+ * 4 profesionales con múltiples especialidades y días de atención.
  */
 class MockEspecialistaRepository : EspecialistaRepository {
 

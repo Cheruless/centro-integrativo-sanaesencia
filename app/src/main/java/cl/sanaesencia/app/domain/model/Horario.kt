@@ -6,34 +6,41 @@ import java.time.format.DateTimeFormatter
 
 /**
  * Bloque de atención de 30 minutos dentro de la jornada 09:00–18:00.
- * Una Cita ocupa 1 o 2 bloques según [Especialidad.bloquesPorSesion].
- * @author Exequiel
+ * Una cita ocupa 1 o 2 bloques según la especialidad.
  */
 data class Horario(val inicio: LocalTime) {
 
+    /** Hora de fin del bloque (inicio + 30 min). */
     val fin: LocalTime
         get() = inicio.plusMinutes(BLOQUE_MINUTOS)
 
-    /** Etiqueta de UI en formato 24h: "09:00 hrs". */
+    /** Etiqueta para UI en formato 24h, ej: "09:00 hrs". */
     val etiqueta: String
         get() = "${inicio.format(FORMATO_HORA)} hrs"
 
     companion object {
+        /** Duración de cada bloque en minutos. */
         const val BLOQUE_MINUTOS: Long = 30
+
+        /** Inicio de la jornada de atención (09:00). */
         val INICIO_JORNADA: LocalTime = LocalTime.of(9, 0)
+
+        /** Fin de la jornada de atención (18:00). */
         val FIN_JORNADA: LocalTime = LocalTime.of(18, 0)
+
+        /** Formato de hora 24h: "HH:mm". */
         val FORMATO_HORA: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
-        /** 18 bloques: 09:00, 09:30, … 17:30. */
+        /** Cantidad total de bloques por día (09:00 hasta 17:30). */
         const val TOTAL_BLOQUES: Int = 18
 
-        /** Todos los inicios de bloque del día. */
+        /** Genera los 18 bloques del día: 09:00, 09:30, … 17:30. */
         fun bloquesDelDia(): List<Horario> =
             (0 until TOTAL_BLOQUES).map { Horario(INICIO_JORNADA.plusMinutes(it * BLOQUE_MINUTOS)) }
 
         /**
-         * Inicios válidos para una sesión de [bloquesPorSesion] bloques.
-         * Una sesión de 2 bloques debe empezar a más tardar 17:00 (termina 18:00).
+         * Inicios válidos para una sesión de N bloques.
+         * Una sesión de 2 bloques empieza a más tardar 17:00.
          */
         fun horasValidasParaSesion(bloquesPorSesion: Int): List<Horario> =
             bloquesDelDia().take(TOTAL_BLOQUES - bloquesPorSesion + 1)
