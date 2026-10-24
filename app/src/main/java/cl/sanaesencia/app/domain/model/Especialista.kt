@@ -1,23 +1,12 @@
 package cl.sanaesencia.app.domain.model
 
+import java.time.DayOfWeek
+
 /**
  * Representa a un profesional o especialista que imparte atenciones en Sanaesencia.
- *
- * TODO (Módulo Especialistas):
- *  1. Desarrollar una data class o Enum 'Especialidad' si un profesional maneja
- *     múltiples especialidades (List<Especialidad>).
- *  2. Especialidades impartidas por el centro integrativo:
- *      - Psicología
- *      - Terapia Ocupacional
- *      - Fonoaudiología
- *      - Psicopedagogía
- *      - Nutrición
- *      - Matrona
- *      - Quiropraxia
- *      - Masoterapia / Masajes
- *      - Evaluaciones del Neurodesarrollo
- *      - Terapia Floral
- *      - Aromaterapia
+ * Puede ejercer una o más especialidades y atiende en un conjunto fijo de días
+ * de la semana (jornada 09:00–18:00).
+ * @author Exequiel
  */
 data class Especialista(
     val id: Int,
@@ -26,7 +15,8 @@ data class Especialista(
     val apellidoPaterno: String,
     val apellidoMaterno: String,
 
-    val especialidad: String,
+    val especialidades: List<Especialidad>,
+    val diasAtencion: Set<DayOfWeek>,
     val descripcion: String = "",
     val email: String = "",
     val telefono: String = "",
@@ -39,4 +29,10 @@ data class Especialista(
 
     val nombreCorto: String
         get() = "$primerNombre $apellidoPaterno $apellidoMaterno"
+
+    /** Etiqueta de UI: "Psicología, Terapia Floral". */
+    val especialidadesLabel: String
+        get() = especialidades.joinToString(", ") { it.displayName }
+
+    fun atiendeEn(dia: DayOfWeek): Boolean = dia in diasAtencion
 }
