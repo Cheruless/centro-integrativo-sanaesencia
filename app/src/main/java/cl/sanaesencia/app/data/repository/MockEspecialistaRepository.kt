@@ -1,11 +1,13 @@
 package cl.sanaesencia.app.data.repository
 
+import cl.sanaesencia.app.domain.model.Especialidad
 import cl.sanaesencia.app.domain.model.Especialista
 import cl.sanaesencia.app.domain.repository.EspecialistaRepository
+import java.time.DayOfWeek
 
 /**
- * Implementación de prueba (Mock / En Memoria) para el catálogo de Especialistas.
- * Utilizada durante la fase de desarrollo del MVP.
+ * Repositorio mock de especialistas con datos de prueba en memoria.
+ * 4 profesionales con múltiples especialidades y días de atención.
  */
 class MockEspecialistaRepository : EspecialistaRepository {
 
@@ -16,7 +18,11 @@ class MockEspecialistaRepository : EspecialistaRepository {
             segundoNombre = "Andrea",
             apellidoPaterno = "Silva",
             apellidoMaterno = "Morales",
-            especialidad = "Aromaterapia",
+            especialidades = listOf(Especialidad.AROMATERAPIA, Especialidad.TERAPIA_FLORAL),
+            diasAtencion = setOf(
+                DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+                DayOfWeek.THURSDAY, DayOfWeek.FRIDAY
+            ),
             descripcion = "Especialista en óleos esenciales y tratamientos holísticos para el estrés y la ansiedad.",
             email = "camila.silva@sanaesencia.cl",
             telefono = "+56 9 1234 5678"
@@ -27,8 +33,9 @@ class MockEspecialistaRepository : EspecialistaRepository {
             segundoNombre = "Ignacio",
             apellidoPaterno = "Rojas",
             apellidoMaterno = "Castro",
-            especialidad = "Quiropraxia",
-            descripcion = "Quiropráctico.",
+            especialidades = listOf(Especialidad.QUIROPRAXIA, Especialidad.MASOTERAPIA),
+            diasAtencion = setOf(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY, DayOfWeek.SATURDAY),
+            descripcion = "Quiropráctico y masoterapeuta enfocado en alivio del dolor musculoesquelético.",
             email = "mateo.rojas@sanaesencia.cl",
             telefono = "+56 9 8765 4321"
         ),
@@ -38,8 +45,9 @@ class MockEspecialistaRepository : EspecialistaRepository {
             segundoNombre = "Paz",
             apellidoPaterno = "Fuentes",
             apellidoMaterno = "Vargas",
-            especialidad = "Terapias Florales",
-            descripcion = "Terapeuta floral especializada en Flores de Bach para armonización emocional.",
+            especialidades = listOf(Especialidad.PSICOLOGIA, Especialidad.TERAPIA_FLORAL),
+            diasAtencion = setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY),
+            descripcion = "Psicóloga y terapeuta floral especializada en Flores de Bach para armonización emocional.",
             email = "valentina.fuentes@sanaesencia.cl",
             telefono = "+56 9 5555 1234"
         ),
@@ -49,8 +57,15 @@ class MockEspecialistaRepository : EspecialistaRepository {
             segundoNombre = "Andrés",
             apellidoPaterno = "Araya",
             apellidoMaterno = "López",
-            especialidad = "Kinesiología Holística",
-            descripcion = "Kinesiólogo enfocado en rehabilitación neuromuscular e integración cuerpo-mente.",
+            especialidades = listOf(
+                Especialidad.PSICOPEDAGOGIA,
+                Especialidad.EVALUACIONES_NEURODESARROLLO
+            ),
+            diasAtencion = setOf(
+                DayOfWeek.MONDAY, DayOfWeek.TUESDAY,
+                DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY
+            ),
+            descripcion = "Psicopedagogo especializado en evaluaciones del neurodesarrollo y apoyo al aprendizaje.",
             email = "gonzalo.araya@sanaesencia.cl",
             telefono = "+56 9 4444 8888"
         )
@@ -61,6 +76,6 @@ class MockEspecialistaRepository : EspecialistaRepository {
     override fun getEspecialistaById(id: Int): Especialista? =
         especialistas.find { it.id == id }
 
-    override fun getEspecialistasByEspecialidad(especialidad: String): List<Especialista> =
-        especialistas.filter { it.especialidad.contains(especialidad, ignoreCase = true) }
+    override fun getEspecialistasByEspecialidad(especialidad: Especialidad): List<Especialista> =
+        especialistas.filter { especialidad in it.especialidades }
 }
