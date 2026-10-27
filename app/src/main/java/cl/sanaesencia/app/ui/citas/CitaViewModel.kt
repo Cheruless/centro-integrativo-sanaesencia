@@ -2,12 +2,12 @@ package cl.sanaesencia.app.ui.citas
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import cl.sanaesencia.app.data.repository.MockCitaRepository
-import cl.sanaesencia.app.data.repository.MockEspecialistaRepository
-import cl.sanaesencia.app.data.repository.MockPacienteRepository
+import cl.sanaesencia.app.data.ServiceLocator
 import cl.sanaesencia.app.domain.model.Cita
+import cl.sanaesencia.app.domain.model.Especialidad
 import cl.sanaesencia.app.domain.model.Especialista
 import cl.sanaesencia.app.domain.model.EstadoCita
+import cl.sanaesencia.app.domain.model.Horario
 import cl.sanaesencia.app.domain.repository.CitaRepository
 import cl.sanaesencia.app.domain.repository.EspecialistaRepository
 import cl.sanaesencia.app.domain.repository.PacienteRepository
@@ -16,12 +16,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.YearMonth
 
 /**
- * Mantiene el listado de citas, estados de carga, mensajes de éxito/error y
- * filtro por estado de cita
- * @author Exequiel
- * */
+ * Estado del listado de citas: datos, carga, mensajes y filtro por estado.
+ */
 data class CitasUiState(
     val citas: List<Cita> = emptyList(),
     val isLoading: Boolean = false,
@@ -29,26 +30,50 @@ data class CitasUiState(
     val mensajeError: String? = null,
     val filtroEstado: EstadoCita? = null
 )
+
 /**
- * Maneja reactivamente de manera reactiva todos los campos del formulario de agendamiento
- * @author Exequiel
- * */
+ * Estado del formulario de agendamiento. Incluye la selección del usuario
+ * y los listados derivados que se recalculan en cada mutador.
+ */
 data class AgendarCitaFormState(
-    val servicio: String = "",
+    val especialidad: Especialidad? = null,
     val especialistaSeleccionado: Especialista? = null,
-    val fecha: String = "",
-    val hora: String = "",
+    val fecha: LocalDate? = null,
+    val hora: LocalTime? = null,
     val notas: String = "",
-    val precio: Double = 35000.0,
+    val searchQuery: String = "",
+    val mesVisible: YearMonth = YearMonth.now(),
+    val especialidadesVisibles: List<Especialidad> = Especialidad.entries,
+    val especialistasFiltrados: List<Especialista> = emptyList(),
+    val especialistasBusqueda: List<Especialista> = emptyList(),
+    val bloquesDisponibles: List<Horario> = emptyList(),
+    val bloquesPorEspecialista: Map<Int, List<Horario>> = emptyMap(),
+    val diasConDisponibilidad: Set<LocalDate> = emptySet(),
+    val precio: Double? = null,
+    val duracionMinutos: Int? = null,
+    val especialistaPreseleccionadoId: Int? = null,
     val isSubmitting: Boolean = false,
     val formError: String? = null,
     val isAgendadoExitoso: Boolean = false
 )
 
+/** Estados del mock de pago. */
+enum class EstadoPago { INACTIVO, PROCESANDO, EXITOSO }
+
+/** Estado de la pantalla de procesamiento de pago. */
+data class PagoUiState(
+    val citaId: Int? = null,
+    val estado: EstadoPago = EstadoPago.INACTIVO
+)
+
+/**
+ * ViewModel principal de citas. Gestiona el listado, el formulario
+ * de agendamiento en 3 pasos, el motor de disponibilidad y el pago mock.
+ */
 class CitaViewModel(
-    private val citaRepository: CitaRepository = MockCitaRepository(),
-    private val especialistaRepository: EspecialistaRepository = MockEspecialistaRepository(),
-    private val pacienteRepository: PacienteRepository = MockPacienteRepository()
+    private val citaRepository: CitaRepository = ServiceLocator.citaRepository,
+    private val especialistaRepository: EspecialistaRepository = ServiceLocator.especialistaRepository,
+    private val pacienteRepository: PacienteRepository = ServiceLocator.pacienteRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CitasUiState())
@@ -57,162 +82,396 @@ class CitaViewModel(
     private val _formState = MutableStateFlow(AgendarCitaFormState())
     val formState: StateFlow<AgendarCitaFormState> = _formState.asStateFlow()
 
-    val especialistas: List<Especialista> = especialistaRepository.getEspecialistas()
+    private val _pagoState = MutableStateFlow(PagoUiState())
+    val pagoState: StateFlow<PagoUiState> = _pagoState.asStateFlow()
+
+    private val todosLosEspecialistas: List<Especialista>
+        get() = especialistaRepository.getEspecialistas()
 
     init {
         cargarCitas()
     }
 
-    /**
-     * Obtiene la lista actualizada de citas.
-     * @author Exequiel
-     * */
+    // --- Listado de citas ---
+
+    /** Carga las citas desde el repositorio al estado de UI. */
     fun cargarCitas() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val lista = citaRepository.getCitas()
-            _uiState.update {
-                it.copy(
-                    citas = lista,
-                    isLoading = false
-                )
-            }
+            _uiState.update { it.copy(citas = lista, isLoading = false) }
         }
     }
 
-    /**
-     * Filtra entre "Todas", "Confirmadas" y "Pendientes".
-     * @param estado Estado a filtrar de las citas.
-     * @author Exequiel
-     * */
+    /** Filtra el listado por estado (Todas / Confirmadas / Pendientes). */
     fun setFiltroEstado(estado: EstadoCita?) {
         _uiState.update { it.copy(filtroEstado = estado) }
     }
 
-    /**
-     * Actualiza el estado de la cita a CANCELADA.
-     * @param idCita ID de la cita a cancelar.
-     * @author Exequiel
-     * */
+    /** Cancela una cita y recarga el listado. */
     fun cancelarCita(idCita: Int) {
         viewModelScope.launch {
             val exito = citaRepository.cancelarCita(idCita)
             if (exito) {
-                _uiState.update {
-                    it.copy(
-                        mensajeExito = "Cita cancelada con éxito."
-                    )
-                }
+                _uiState.update { it.copy(mensajeExito = "Cita cancelada con éxito.") }
                 cargarCitas()
             } else {
-                _uiState.update {
-                    it.copy(
-                        mensajeError = "No se pudo cancelar la cita."
-                    )
-                }
+                _uiState.update { it.copy(mensajeError = "No se pudo cancelar la cita.") }
             }
         }
     }
 
-    // --- Métodos del Formulario de Agendamiento ---
-
-    fun onServicioChange(nuevoServicio: String) {
-        _formState.update { it.copy(servicio = nuevoServicio, formError = null) }
+    /** Limpia los mensajes de éxito/error del snackbar. */
+    fun limpiarMensajes() {
+        _uiState.update { it.copy(mensajeExito = null, mensajeError = null) }
     }
 
-    fun onEspecialistaSeleccionado(especialista: Especialista) {
-        _formState.update {
-            it.copy(
-                especialistaSeleccionado = especialista,
+    // --- Formulario de agendamiento ---
+
+    /**
+     * Resetea el formulario. Si se pasa un [especialistaPreseleccionadoId],
+     * precarga ese profesional y limita las especialidades visibles a las suyas.
+     */
+    fun iniciarFormulario(especialistaPreseleccionadoId: Int? = null) {
+        var state = AgendarCitaFormState()
+        if (especialistaPreseleccionadoId != null) {
+            val esp = especialistaRepository.getEspecialistaById(especialistaPreseleccionadoId)
+            if (esp != null) {
+                state = state.copy(
+                    especialistaPreseleccionadoId = especialistaPreseleccionadoId,
+                    especialistaSeleccionado = esp
+                )
+            }
+        }
+        _formState.value = recalcularDerivados(state)
+    }
+
+    /** Selecciona la especialidad y limpia la hora. */
+    fun onEspecialidadChange(nueva: Especialidad?) {
+        _formState.update { prev ->
+            var next = prev.copy(
+                especialidad = nueva,
+                precio = nueva?.precioBase,
+                duracionMinutos = nueva?.duracionMinutos,
+                hora = null,
                 formError = null
             )
+            val esp = next.especialistaSeleccionado
+            if (esp != null && nueva != null && nueva !in esp.especialidades) {
+                next = next.copy(especialistaSeleccionado = null)
+            }
+            recalcularDerivados(next)
         }
     }
 
-    fun onFechaChange(nuevaFecha: String) {
-        _formState.update { it.copy(fecha = nuevaFecha, formError = null) }
+    /**
+     * Selecciona un especialista. Si la fecha actual no es compatible
+     * con sus días de atención, la limpia junto con la hora.
+     */
+    fun onEspecialistaSeleccionado(especialista: Especialista) {
+        _formState.update { prev ->
+            var next = prev.copy(especialistaSeleccionado = especialista, formError = null)
+            val fecha = next.fecha
+            if (fecha != null && !especialista.atiendeEn(fecha.dayOfWeek)) {
+                next = next.copy(fecha = null, hora = null)
+            } else {
+                next = next.copy(hora = null)
+            }
+            val actual = next.especialidad
+            if (actual != null && actual !in especialista.especialidades) {
+                val primera = especialista.especialidades.firstOrNull()
+                next = next.copy(
+                    especialidad = primera,
+                    precio = primera?.precioBase,
+                    duracionMinutos = primera?.duracionMinutos
+                )
+            }
+            recalcularDerivados(next)
+        }
     }
 
-    fun onHoraChange(nuevaHora: String) {
-        _formState.update { it.copy(hora = nuevaHora, formError = null) }
+    /**
+     * Selecciona un día del calendario. Si el especialista elegido
+     * no atiende ese día, se deselecciona.
+     */
+    fun onFechaChange(nuevaFecha: LocalDate?) {
+        _formState.update { prev ->
+            var next = prev.copy(fecha = nuevaFecha, hora = null, formError = null)
+            val esp = next.especialistaSeleccionado
+            if (esp != null && nuevaFecha != null && !esp.atiendeEn(nuevaFecha.dayOfWeek)) {
+                next = next.copy(especialistaSeleccionado = null)
+            }
+            recalcularDerivados(next)
+        }
     }
 
+    /** Selecciona un bloque horario disponible. */
+    fun onHoraChange(nuevaHora: LocalTime?) {
+        _formState.update { prev ->
+            recalcularDerivados(prev.copy(hora = nuevaHora, formError = null))
+        }
+    }
+
+    /** Actualiza las notas opcionales de la cita. */
     fun onNotasChange(nuevasNotas: String) {
         _formState.update { it.copy(notas = nuevasNotas) }
     }
 
-    /**
-     * Valida que los campos no estén vacíos, construye la nueva entidad [Cita]
-     * asociada al paciente activo y la guarda en el repositorio.
-     *
-     * @return `true` si la cita fue agendada exitosamente; `false` en caso contrario.
-     * @author Exequiel
-     */
-    fun agendarCita(): Boolean {
-        val currentForm = _formState.value
+    /** Filtra especialistas por nombre (búsqueda en Paso 1). */
+    fun onSearchQueryChange(query: String) {
+        _formState.update { prev ->
+            val next = prev.copy(searchQuery = query, formError = null)
+            val resultados = if (query.isBlank()) emptyList()
+            else todosLosEspecialistas.filter {
+                it.nombreCompleto.contains(query, ignoreCase = true)
+            }
+            recalcularDerivados(next.copy(especialistasBusqueda = resultados))
+        }
+    }
 
-        if (currentForm.servicio.isBlank()) {
-            _formState.update { it.copy(formError = "Por favor, selecciona o ingresa un servicio.") }
-            return false
+    /** Limpia especialista, fecha y hora. Mantiene la especialidad seleccionada. */
+    fun onBorrarSeleccion() {
+        _formState.update { prev ->
+            recalcularDerivados(
+                prev.copy(especialistaSeleccionado = null, fecha = null, hora = null, formError = null)
+            )
         }
-        if (currentForm.especialistaSeleccionado == null) {
-            _formState.update { it.copy(formError = "Por favor, selecciona un especialista.") }
-            return false
+    }
+
+    /** Cambia el mes visible del calendario sin perder la fecha seleccionada. */
+    fun onMesChange(nueva: YearMonth) {
+        _formState.update { prev ->
+            recalcularDerivados(prev.copy(mesVisible = nueva))
         }
-        if (currentForm.fecha.isBlank()) {
-            _formState.update { it.copy(formError = "Por favor, selecciona la fecha de la cita.") }
-            return false
+    }
+
+    // --- Acciones de Paso 3 ---
+
+    /**
+     * Crea la cita en estado PENDIENTE y muestra la notificación de agendada.
+     * @return id de la cita, o null si la validación falló.
+     */
+    fun agendarCita(): Int? {
+        val id = crearCita() ?: return null
+        val fecha = _formState.value.fecha
+        if (fecha != null) {
+            _uiState.update { it.copy(mensajeExito = Cita.mensajeCitaAgendada(fecha)) }
         }
-        if (currentForm.hora.isBlank()) {
-            _formState.update { it.copy(formError = "Por favor, selecciona la hora de la cita.") }
-            return false
+        return id
+    }
+
+    /**
+     * Crea la cita en PENDIENTE sin notificación de agendada.
+     * Se usa con "Confirmar y pagar" — la notificación viene del pago.
+     */
+    fun agendarParaPago(): Int? = crearCita()
+
+    private fun crearCita(): Int? {
+        val current = _formState.value
+
+        val especialidad = current.especialidad
+            ?: return fallar("Selecciona una especialidad o terapia.")
+        val especialista = current.especialistaSeleccionado
+            ?: return fallar("Selecciona un especialista.")
+        val fecha = current.fecha
+            ?: return fallar("Selecciona la fecha en el calendario.")
+        val hora = current.hora
+            ?: return fallar("Selecciona un horario disponible.")
+
+        if (hora !in current.bloquesDisponibles.map { it.inicio }) {
+            return fallar("Ese horario ya no está disponible.")
         }
 
         _formState.update { it.copy(isSubmitting = true) }
 
-        val pacienteActual = pacienteRepository.getPacienteActual()
-
         val nuevaCita = Cita(
-            id = 0, // El repositorio asignará el id autoincremental
-            fecha = currentForm.fecha,
-            hora = currentForm.hora,
-            servicio = currentForm.servicio,
-            especialista = currentForm.especialistaSeleccionado,
-            paciente = pacienteActual,
-            estado = EstadoCita.CONFIRMADA,
-            precio = currentForm.precio,
-            notas = currentForm.notas.ifBlank { null }
+            id = 0,
+            fecha = fecha,
+            hora = hora,
+            especialidad = especialidad,
+            precio = current.precio ?: especialidad.precioBase,
+            notas = current.notas.ifBlank { null },
+            especialista = especialista,
+            paciente = pacienteRepository.getPacienteActual(),
+            estado = EstadoCita.PENDIENTE
         )
 
-        val exito = citaRepository.agendarCita(nuevaCita)
+        val id = citaRepository.agendarCita(nuevaCita)
 
-        if (exito) {
+        return if (id != null) {
             cargarCitas()
-            _formState.update {
-                it.copy(
-                    isSubmitting = false,
-                    isAgendadoExitoso = true,
-                    formError = null
-                )
-            }
-            _uiState.update { it.copy(mensajeExito = "¡Cita agendada exitosamente!") }
-            return true
+            _formState.update { it.copy(isSubmitting = false, isAgendadoExitoso = true, formError = null) }
+            id
         } else {
             _formState.update {
-                it.copy(
-                    isSubmitting = false,
-                    formError = "Error al agendar la cita. Inténtalo de nuevo."
-                )
+                it.copy(isSubmitting = false, formError = "Error al agendar la cita. Inténtalo de nuevo.")
             }
-            return false
+            null
         }
     }
 
-    fun resetFormState() {
-        _formState.value = AgendarCitaFormState()
+    private fun fallar(mensaje: String): Int? {
+        _formState.update { it.copy(formError = mensaje) }
+        return null
     }
 
-    fun limpiarMensajes() {
-        _uiState.update { it.copy(mensajeExito = null, mensajeError = null) }
+    // --- Pago mock ---
+
+    /** Inicia el procesamiento de pago para una cita. */
+    fun iniciarPago(citaId: Int) {
+        _pagoState.value = PagoUiState(citaId = citaId, estado = EstadoPago.PROCESANDO)
+    }
+
+    /** Completa el pago: cambia la cita a CONFIRMADA y notifica al usuario. */
+    fun completarPago() {
+        val citaId = _pagoState.value.citaId ?: return
+        val exito = citaRepository.pagarCita(citaId)
+        if (exito) {
+            _pagoState.update { it.copy(estado = EstadoPago.EXITOSO) }
+            _uiState.update { it.copy(mensajeExito = "Se ha confirmado tu cita exitosamente") }
+            cargarCitas()
+        } else {
+            _pagoState.update { it.copy(estado = EstadoPago.EXITOSO) }
+            _uiState.update { it.copy(mensajeError = "No se pudo procesar el pago.") }
+        }
+    }
+
+    /** Resetea el estado del pago a INACTIVO. */
+    fun limpiarPago() {
+        _pagoState.value = PagoUiState()
+    }
+
+    // --- Motor de disponibilidad ---
+
+    /**
+     * Recalcula todos los listados derivados (especialidades visibles,
+     * especialistas filtrados, bloques libres, días con disponibilidad)
+     * a partir de la selección actual.
+     */
+    private fun recalcularDerivados(prev: AgendarCitaFormState): AgendarCitaFormState {
+        val citas = citaRepository.getCitas()
+        val especialidad = prev.especialidad
+        val especialista = prev.especialistaSeleccionado
+        val fecha = prev.fecha
+
+        val especialidadesVisibles =
+            if (prev.especialistaPreseleccionadoId != null) {
+                prev.especialistaSeleccionado?.especialidades ?: Especialidad.entries.toList()
+            } else {
+                especialista?.especialidades ?: Especialidad.entries.toList()
+            }
+
+        val especialistasFiltrados = todosLosEspecialistas.filter { esp ->
+            (especialidad == null || especialidad in esp.especialidades) &&
+                (fecha == null || esp.atiendeEn(fecha.dayOfWeek))
+        }
+
+        val bloquesPorEspecialista: Map<Int, List<Horario>> =
+            if (especialidad != null && fecha != null) {
+                especialistasFiltrados.associate { esp ->
+                    esp.id to bloquesDisponiblesDe(esp, especialidad, fecha, citas)
+                }
+            } else {
+                emptyMap()
+            }
+
+        val bloquesDisponibles: List<Horario> =
+            when {
+                especialidad == null || fecha == null -> emptyList()
+                especialista != null -> bloquesPorEspecialista[especialista.id] ?: emptyList()
+                else -> {
+                    val todos = bloquesPorEspecialista.values.flatten().map { it.inicio }.toSet()
+                    Horario.horasValidasParaSesion(especialidad.bloquesPorSesion)
+                        .filter { it.inicio in todos }
+                }
+            }
+
+        val diasConDisponibilidad =
+            diasConDisponibilidadDelMes(prev.mesVisible, especialidad, especialista, citas)
+
+        return prev.copy(
+            especialidadesVisibles = especialidadesVisibles,
+            especialistasFiltrados = especialistasFiltrados,
+            bloquesPorEspecialista = bloquesPorEspecialista,
+            bloquesDisponibles = bloquesDisponibles,
+            diasConDisponibilidad = diasConDisponibilidad
+        )
+    }
+
+    /**
+     * Calcula los bloques horarios libres de un especialista en una fecha,
+     * considerando los bloques ocupados por citas existentes.
+     */
+    private fun bloquesDisponiblesDe(
+        esp: Especialista,
+        especialidad: Especialidad,
+        fecha: LocalDate,
+        citas: List<Cita>
+    ): List<Horario> {
+        if (!esp.atiendeEn(fecha.dayOfWeek)) return emptyList()
+
+        val n = especialidad.bloquesPorSesion
+        val ocupados = bloquesOcupadosIndices(esp.id, fecha, citas)
+
+        return Horario.horasValidasParaSesion(n).filter { horario ->
+            val idx = Horario.indiceDe(horario.inicio)
+            idx >= 0 && (idx until idx + n).none { it in ocupados }
+        }
+    }
+
+    /**
+     * Devuelve los índices de bloques ocupados por citas no canceladas
+     * de un especialista en una fecha dada.
+     */
+    private fun bloquesOcupadosIndices(
+        especialistaId: Int,
+        fecha: LocalDate,
+        citas: List<Cita>
+    ): Set<Int> {
+        val ocupados = mutableSetOf<Int>()
+        citas
+            .filter {
+                it.especialista.id == especialistaId &&
+                    it.fecha == fecha &&
+                    it.estado != EstadoCita.CANCELADA
+            }
+            .forEach { cita ->
+                val inicioIdx = Horario.indiceDe(cita.hora)
+                if (inicioIdx >= 0) {
+                    for (i in inicioIdx until inicioIdx + cita.bloques) {
+                        ocupados.add(i)
+                    }
+                }
+            }
+        return ocupados
+    }
+
+    /**
+     * Calcula qué días del mes tienen al menos un bloque libre,
+     * para los indicadores del calendario.
+     */
+    private fun diasConDisponibilidadDelMes(
+        mes: YearMonth,
+        especialidad: Especialidad?,
+        especialista: Especialista?,
+        citas: List<Cita>
+    ): Set<LocalDate> {
+        val hoy = LocalDate.now()
+        val candidatos = if (especialista != null) listOf(especialista) else todosLosEspecialistas
+        val result = mutableSetOf<LocalDate>()
+
+        for (day in 1..mes.lengthOfMonth()) {
+            val fecha = mes.atDay(day)
+            if (fecha.isBefore(hoy)) continue
+
+            val hayDisponibilidad = candidatos.any { esp ->
+                val espOk = especialidad == null || especialidad in esp.especialidades
+                if (!espOk) return@any false
+                val efectiva = especialidad ?: esp.especialidades.firstOrNull() ?: return@any false
+                bloquesDisponiblesDe(esp, efectiva, fecha, citas).isNotEmpty()
+            }
+            if (hayDisponibilidad) result.add(fecha)
+        }
+        return result
     }
 }

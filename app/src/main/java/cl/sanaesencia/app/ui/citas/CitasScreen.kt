@@ -26,11 +26,16 @@ import androidx.compose.ui.unit.dp
 import cl.sanaesencia.app.domain.model.Cita
 import cl.sanaesencia.app.domain.model.EstadoCita
 
+/**
+ * Pantalla principal: lista de citas del paciente con filtros por estado.
+ * Acciones disponibles: agendar nueva cita, confirmar pendientes (pago mock) y cancelar.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CitasScreen(
     viewModel: CitaViewModel,
-    onAgendarCitaClick: () -> Unit = {}
+    onAgendarCitaClick: () -> Unit = {},
+    onConfirmarClick: (Cita) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var citaParaCancelar by remember { mutableStateOf<Cita?>(null) }
@@ -188,7 +193,8 @@ fun CitasScreen(
                     items(citasFiltradas, key = { it.id }) { cita ->
                         CitaCard(
                             cita = cita,
-                            onCancelarClick = { citaParaCancelar = cita }
+                            onCancelarClick = { citaParaCancelar = cita },
+                            onConfirmarClick = { onConfirmarClick(cita) }
                         )
                     }
                 }
@@ -202,7 +208,7 @@ fun CitasScreen(
             icon = { Icon(Icons.Default.Cancel, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
             title = { Text("¿Cancelar cita?") },
             text = {
-                Text("¿Estás seguro de que deseas cancelar tu cita para '${cita.servicio}' el día ${cita.fecha} a las ${cita.hora} hrs?")
+                Text("¿Estás seguro de que deseas cancelar tu cita para '${cita.servicio}' el día ${cita.fechaLabel} a las ${cita.horaLabel} hrs?")
             },
             confirmButton = {
                 TextButton(
@@ -224,10 +230,15 @@ fun CitasScreen(
     }
 }
 
+/**
+ * Tarjeta de una cita: muestra fecha, hora, servicio, especialista, precio y estado.
+ * En estado PENDIENTE ofrece botones Confirmar y Cancelar.
+ */
 @Composable
 fun CitaCard(
     cita: Cita,
-    onCancelarClick: () -> Unit
+    onCancelarClick: () -> Unit,
+    onConfirmarClick: () -> Unit = {}
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -252,7 +263,7 @@ fun CitaCard(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "${cita.fecha} - ${cita.hora} hrs",
+                        text = "${cita.fechaLabel} - ${cita.horaLabel} hrs",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary
@@ -281,7 +292,7 @@ fun CitaCard(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "${cita.especialista.nombreCompleto} (${cita.especialista.especialidad})",
+                    text = "${cita.especialista.nombreCompleto} (${cita.especialidad.displayName})",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -312,9 +323,22 @@ fun CitaCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                if (cita.estado != EstadoCita.CANCELADA && cita.estado != EstadoCita.REALIZADA
-                    && cita.estado != EstadoCita.CONFIRMADA
-                ) {
+                if (cita.estado == EstadoCita.PENDIENTE) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = onConfirmarClick,
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Confirmar")
+                        }
+                        OutlinedButton(
+                            onClick = onCancelarClick,
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Text("Cancelar")
+                        }
+                    }
+                } else if (cita.estado != EstadoCita.CANCELADA && cita.estado != EstadoCita.REALIZADA) {
                     OutlinedButton(
                         onClick = onCancelarClick,
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
@@ -327,6 +351,7 @@ fun CitaCard(
     }
 }
 
+/** Chip de color con icono que representa el estado de la cita (Pendiente, Confirmada, etc.). */
 @Composable
 fun EstadoChip(estado: EstadoCita) {
     val (bgColor, textColor, label, icon) = when (estado) {
