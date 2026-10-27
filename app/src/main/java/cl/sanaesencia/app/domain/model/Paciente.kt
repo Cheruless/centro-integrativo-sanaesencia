@@ -1,11 +1,16 @@
 package cl.sanaesencia.app.domain.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
 /**
  * Paciente registrado en Sanaesencia. Contiene datos personales
  * y de contacto necesarios para agendar citas.
  */
+@Entity(tableName = "pacientes")
 data class Paciente(
-    val id: Int,
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
     val rut: String,
     val primerNombre: String,
     val segundoNombre: String? = null,

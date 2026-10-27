@@ -1,13 +1,17 @@
 package cl.sanaesencia.app.domain.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import java.time.DayOfWeek
 
 /**
  * Profesional del centro. Puede ejercer una o más especialidades
  * y atiende en un conjunto fijo de días de la semana.
  */
+@Entity(tableName = "especialistas")
 data class Especialista(
-    val id: Int,
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
     val primerNombre: String,
     val segundoNombre: String? = null,
     val apellidoPaterno: String,

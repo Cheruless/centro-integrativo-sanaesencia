@@ -2,9 +2,7 @@ package cl.sanaesencia.app.ui.citas
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import cl.sanaesencia.app.data.repository.MockCitaRepository
-import cl.sanaesencia.app.data.repository.MockEspecialistaRepository
-import cl.sanaesencia.app.data.repository.MockPacienteRepository
+import cl.sanaesencia.app.data.ServiceLocator
 import cl.sanaesencia.app.domain.model.Cita
 import cl.sanaesencia.app.domain.model.Especialidad
 import cl.sanaesencia.app.domain.model.Especialista
@@ -73,9 +71,9 @@ data class PagoUiState(
  * de agendamiento en 3 pasos, el motor de disponibilidad y el pago mock.
  */
 class CitaViewModel(
-    private val citaRepository: CitaRepository = MockCitaRepository(),
-    private val especialistaRepository: EspecialistaRepository = MockEspecialistaRepository(),
-    private val pacienteRepository: PacienteRepository = MockPacienteRepository()
+    private val citaRepository: CitaRepository = ServiceLocator.citaRepository,
+    private val especialistaRepository: EspecialistaRepository = ServiceLocator.especialistaRepository,
+    private val pacienteRepository: PacienteRepository = ServiceLocator.pacienteRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CitasUiState())

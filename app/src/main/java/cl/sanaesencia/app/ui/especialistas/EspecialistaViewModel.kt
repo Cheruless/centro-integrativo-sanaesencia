@@ -1,7 +1,7 @@
 package cl.sanaesencia.app.ui.especialistas
 
 import androidx.lifecycle.ViewModel
-import cl.sanaesencia.app.data.repository.MockEspecialistaRepository
+import cl.sanaesencia.app.data.ServiceLocator
 import cl.sanaesencia.app.domain.model.Especialidad
 import cl.sanaesencia.app.domain.model.Especialista
 import cl.sanaesencia.app.domain.repository.EspecialistaRepository
@@ -28,7 +28,7 @@ data class EspecialistasUiState(
  * @author Exequiel
  */
 class EspecialistaViewModel(
-    private val especialistaRepository: EspecialistaRepository = MockEspecialistaRepository()
+    private val especialistaRepository: EspecialistaRepository = ServiceLocator.especialistaRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EspecialistasUiState())
