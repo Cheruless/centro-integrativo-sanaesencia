@@ -23,7 +23,7 @@ Sanaesencia permite a los pacientes:
 | UI | Jetpack Compose + Material 3 |
 | Navegación | Navigation Compose |
 | Arquitectura | MVVM (ViewModel + StateFlow) |
-| Datos | Repositorios mock en memoria (sin backend) |
+| Datos | Room + SQLite (persistencia local) |
 | SDK mínimo | Android 10 (API 29) |
 
 ## Estructura del proyecto
@@ -34,7 +34,8 @@ app/src/main/java/cl/sanaesencia/app/
 │   ├── model/          # Entidades: Cita, Especialista, Especialidad, Horario, Paciente, Producto
 │   └── repository/     # Interfaces de repositorio (contratos)
 ├── data/
-│   └── repository/     # Implementaciones mock (datos de prueba en memoria)
+│   ├── local/          # Room: Entities, DAOs, Converters, SanaesenciaDatabase, SeedCallback
+│   └── repository/     # Repositorios Room (implementan interfaces con DAO)
 └── ui/
     ├── citas/          # Flujo de agendamiento (3 pasos) + lista de citas + pago
     ├── especialistas/  # Catálogo de profesionales
@@ -62,6 +63,21 @@ Paso 1: Especialidad → Paso 2: Resultados → Paso 3: Confirmar → Pago (mock
 - **Horario** — bloque de atención de 30 min dentro de la jornada 09:00–18:00.
 - **Especialista** — profesional con una o más especialidades y días de atención.
 - **Cita** — reserva con fecha, hora, especialidad, especialista y estado (Pendiente → Confirmada).
+
+## Base de datos (Room + SQLite)
+
+Los datos persisten localmente en el dispositivo usando **Room** (capa sobre SQLite).
+
+| Componente | Descripción |
+|------------|-------------|
+| `Converters.kt` | Convierte tipos complejos (LocalDate, List, Set, enums) a String/Int para SQLite |
+| Entities | `Especialista`, `Producto`, `Paciente` (anotados con `@Entity`) + `CitaEntity` (con Foreign Keys) |
+| DAOs | Consultas SQL por tabla: `ProductoDao`, `PacienteDao`, `EspecialistaDao`, `CitaDao` |
+| `SanaesenciaDatabase` | Base de datos Room (versión 1) con todas las entidades |
+| `SeedCallback` | Inserta datos de prueba la primera vez que se crea la BD |
+| Repositorios | `Room*Repository` implementan las interfaces del dominio usando los DAOs |
+
+La BD se crea con datos iniciales: 5 productos, 1 paciente, 4 especialistas y 2 citas de ejemplo.
 
 ## Ejecución
 
