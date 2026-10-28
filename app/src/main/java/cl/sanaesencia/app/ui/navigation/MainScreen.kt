@@ -18,6 +18,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import cl.sanaesencia.app.ui.carrito.CarritoScreen
 import cl.sanaesencia.app.ui.citas.AgendarPaso1Screen
 import cl.sanaesencia.app.ui.citas.AgendarPaso2Screen
 import cl.sanaesencia.app.ui.citas.AgendarPaso3Screen
@@ -29,10 +30,6 @@ import cl.sanaesencia.app.ui.especialistas.EspecialistasScreen
 import cl.sanaesencia.app.ui.perfil.PerfilScreen
 import cl.sanaesencia.app.ui.productos.ProductosScreen
 
-/**
- * Contenedor principal con NavHost y barra de navegación inferior.
- * Gestiona las rutas de citas, especialistas, productos, perfil y el flujo de agendamiento.
- */
 @Composable
 fun MainScreen(
     navController: NavHostController = rememberNavController(),
@@ -175,6 +172,9 @@ fun MainScreen(
             }
             composable(Screen.Productos.route) {
                 ProductosScreen()
+            }
+            composable(Screen.Carrito.route) {
+                CarritoScreen()
             }
             composable(Screen.Perfil.route) {
                 PerfilScreen()
