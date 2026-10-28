@@ -2,23 +2,24 @@ package cl.sanaesencia.app.ui.citas
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import cl.sanaesencia.app.R
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import kotlinx.coroutines.delay
 
-/**
- * Pantalla de procesamiento de pago (mock MVP).
- * Simula 3 segundos de procesamiento y muestra confirmación.
- * No implementa pago real — solo demostración de flujo.
- * @author Exequiel
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProcesandoPagoScreen(
@@ -26,96 +27,160 @@ fun ProcesandoPagoScreen(
     citaId: Int,
     onPagoCompletado: () -> Unit = {}
 ) {
-    val pagoState by viewModel.pagoState.collectAsState()
+    var isPaying by remember { mutableStateOf(false) }
+    var isSuccess by remember { mutableStateOf(false) }
 
-    // Bloquear retroceso mientras se procesa
-    BackHandler(enabled = pagoState.estado == EstadoPago.PROCESANDO) {
-        // No-op: no se puede volver durante el procesamiento
+    BackHandler(enabled = isPaying) {
     }
 
-    // Siempre iniciar de cero al entrar: limpia estado residual de un pago anterior
-    // y asegura que se procese la cita actual.
-    LaunchedEffect(citaId) {
-        viewModel.iniciarPago(citaId)
-        delay(3_000)
-        viewModel.completarPago()
-        delay(1_500)
-        onPagoCompletado()
+    LaunchedEffect(isSuccess) {
+        if (isSuccess) {
+            viewModel.completarPago()
+            delay(2500)
+            onPagoCompletado()
+        }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Procesando pago") },
-                navigationIcon = {
-                    if (pagoState.estado != EstadoPago.PROCESANDO) {
-                        IconButton(onClick = onPagoCompletado) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "Cerrar"
-                            )
-                        }
-                    }
-                }
+                title = { Text("Procesando pago", color = Color(0xFF673AB7), fontWeight = FontWeight.Bold) }
             )
         }
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
+                .padding(24.dp),
             contentAlignment = Alignment.Center
         ) {
-            when (pagoState.estado) {
-                EstadoPago.PROCESANDO -> {
+            when {
+                isSuccess -> {
+                    val compositionResult = rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.success_check))
+                    val composition = compositionResult.value
+                    val progress by animateLottieCompositionAsState(
+                        composition = composition,
+                        isPlaying = composition != null,
+                        iterations = 1
+                    )
+
+                    ElevatedCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                        shape = RoundedCornerShape(24.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            if (composition != null) {
+                                LottieAnimation(
+                                    composition = composition,
+                                    progress = { progress },
+                                    modifier = Modifier.size(96.dp)
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(96.dp),
+                                    tint = Color(0xFF673AB7)
+                                )
+                            }
+                            Text(
+                                text = "¡Pago procesado con éxito!",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF673AB7),
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = "Tu cita ha sido confirmada y pagada correctamente.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+                isPaying -> {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(64.dp),
-                            strokeWidth = 5.dp
+                            strokeWidth = 5.dp,
+                            color = Color(0xFF673AB7)
                         )
                         Text(
                             text = "Procesando pago...",
                             style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF673AB7)
                         )
                         Text(
-                            text = "Esto tomará unos segundos",
+                            text = "Conectando con la pasarela segura...",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                }
-                EstadoPago.EXITOSO -> {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier.padding(32.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            modifier = Modifier.size(80.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "Se ha confirmado tu cita exitosamente",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
-                        )
-                        Text(
-                            text = "Tu cita ha sido confirmada y pagada",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
+
+                    LaunchedEffect(Unit) {
+                        viewModel.iniciarPago(citaId)
+                        delay(1500)
+                        isSuccess = true
                     }
                 }
-                EstadoPago.INACTIVO -> {
-                    CircularProgressIndicator()
+                else -> {
+                    ElevatedCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                        shape = RoundedCornerShape(24.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(20.dp)
+                        ) {
+                            Text(
+                                text = "Confirmación de Pago",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF673AB7)
+                            )
+                            Text(
+                                text = "Estás a un paso de confirmar tu cita en Sanaesencia.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                            Button(
+                                onClick = {
+                                    isPaying = true
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF673AB7))
+                            ) {
+                                Text(
+                                    text = "Confirmar Pago",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.EventBusy
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
@@ -22,18 +23,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-
 import cl.sanaesencia.app.domain.model.Cita
 import cl.sanaesencia.app.domain.model.EstadoCita
 
-/**
- * Pantalla principal: lista de citas del paciente con filtros por estado.
- * Acciones disponibles: agendar nueva cita, confirmar pendientes (pago mock) y cancelar.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CitasScreen(
     viewModel: CitaViewModel,
+    onMenuClick: () -> Unit = {},
     onAgendarCitaClick: () -> Unit = {},
     onConfirmarClick: (Cita) -> Unit = {}
 ) {
@@ -62,14 +59,25 @@ fun CitasScreen(
     }
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Mis Citas", color = Color(0xFF673AB7), fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onMenuClick) {
+                        Icon(imageVector = Icons.Default.Menu, contentDescription = "Menú")
+                    }
+                }
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onAgendarCitaClick,
                 icon = { Icon(Icons.Default.Add, contentDescription = "Agendar") },
                 text = { Text("Agendar Cita") },
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                containerColor = Color(0xFF673AB7),
+                contentColor = Color.White,
+                shape = RoundedCornerShape(16.dp)
             )
         }
     ) { innerPadding ->
@@ -81,30 +89,29 @@ fun CitasScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-                ),
-                shape = RoundedCornerShape(16.dp),
+            ElevatedCard(
+                colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                shape = RoundedCornerShape(24.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(20.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary),
+                            .background(Color(0xFF673AB7)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.CalendarMonth,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary
+                            tint = Color.White
                         )
                     }
                     Spacer(modifier = Modifier.width(16.dp))
@@ -112,7 +119,8 @@ fun CitasScreen(
                         Text(
                             text = "Mis Citas Médicas",
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF673AB7)
                         )
                         Text(
                             text = "Gestiona tus sesiones y terapias en Sanaesencia",
@@ -179,7 +187,11 @@ fun CitasScreen(
                             color = MaterialTheme.colorScheme.outline
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = onAgendarCitaClick) {
+                        Button(
+                            onClick = onAgendarCitaClick,
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF673AB7))
+                        ) {
                             Text("Agendar primera cita")
                         }
                     }
@@ -230,10 +242,6 @@ fun CitasScreen(
     }
 }
 
-/**
- * Tarjeta de una cita: muestra fecha, hora, servicio, especialista, precio y estado.
- * En estado PENDIENTE ofrece botones Confirmar y Cancelar.
- */
 @Composable
 fun CitaCard(
     cita: Cita,
@@ -242,12 +250,14 @@ fun CitaCard(
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp)
+        colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        shape = RoundedCornerShape(24.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -259,14 +269,14 @@ fun CitaCard(
                         imageVector = Icons.Default.Schedule,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = Color(0xFF673AB7)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "${cita.fechaLabel} - ${cita.horaLabel} hrs",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = Color(0xFF673AB7)
                     )
                 }
 
@@ -278,7 +288,8 @@ fun CitaCard(
             Text(
                 text = cita.servicio,
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF673AB7)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -327,7 +338,8 @@ fun CitaCard(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
                             onClick = onConfirmarClick,
-                            shape = RoundedCornerShape(8.dp)
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF673AB7))
                         ) {
                             Text("Confirmar")
                         }
@@ -351,7 +363,6 @@ fun CitaCard(
     }
 }
 
-/** Chip de color con icono que representa el estado de la cita (Pendiente, Confirmada, etc.). */
 @Composable
 fun EstadoChip(estado: EstadoCita) {
     val (bgColor, textColor, label, icon) = when (estado) {

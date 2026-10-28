@@ -6,11 +6,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cl.sanaesencia.app.data.ServiceLocator
@@ -19,7 +21,10 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CarritoScreen() {
+fun CarritoScreen(
+    onMenuClick: () -> Unit = {},
+    onProcederPagoClick: () -> Unit = {}
+) {
     val coroutineScope = rememberCoroutineScope()
     val carritoItems by ServiceLocator.carritoRepository.obtenerCarritoFlow().collectAsState(initial = emptyList())
 
@@ -30,7 +35,12 @@ fun CarritoScreen() {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Carrito de Compras") }
+                title = { Text("Carrito de Compras", color = Color(0xFF673AB7), fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onMenuClick) {
+                        Icon(imageVector = Icons.Default.Menu, contentDescription = "Menú")
+                    }
+                }
             )
         },
         bottomBar = {
@@ -58,17 +68,23 @@ fun CarritoScreen() {
                                 text = "$ ${total.toInt()}",
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                                color = Color(0xFF673AB7)
                             )
                         }
 
                         Button(
-                            onClick = {
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
+                            onClick = onProcederPagoClick,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF673AB7))
                         ) {
-                            Text("Proceder al Pago")
+                            Text(
+                                text = "Proceder al Pago",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
@@ -109,10 +125,11 @@ fun CarritoScreen() {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(carritoItems, key = { it.id }) { item ->
-                    Card(
+                    ElevatedCard(
                         modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        shape = RoundedCornerShape(12.dp)
+                        colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                        shape = RoundedCornerShape(20.dp)
                     ) {
                         Row(
                             modifier = Modifier
@@ -128,7 +145,8 @@ fun CarritoScreen() {
                                 Text(
                                     text = item.nombreProducto,
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF673AB7)
                                 )
                                 Text(
                                     text = "Cantidad: ${item.cantidad}",
@@ -138,7 +156,7 @@ fun CarritoScreen() {
                                 Text(
                                     text = "$ ${(item.precio * item.cantidad).toInt()}",
                                     style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.primary,
+                                    color = Color(0xFF673AB7),
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }

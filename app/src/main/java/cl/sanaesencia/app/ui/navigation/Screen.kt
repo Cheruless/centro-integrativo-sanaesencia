@@ -2,6 +2,7 @@ package cl.sanaesencia.app.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingBag
@@ -14,6 +15,7 @@ sealed class Screen(
     val icon: ImageVector? = null
 ) {
     object Auth : Screen("auth", "Autenticación")
+    object Home : Screen("home", "Inicio", Icons.Default.Home)
     object Citas : Screen("citas", "Mis Citas", Icons.Default.CalendarMonth)
     object Especialistas : Screen("especialistas", "Especialistas", Icons.Default.MedicalServices)
     object Productos : Screen("productos", "Productos", Icons.Default.ShoppingBag)
@@ -35,10 +37,15 @@ sealed class Screen(
     }
 }
 
-val bottomNavItems = listOf(
+val drawerNavItems = listOf(
+    Screen.Home,
     Screen.Citas,
     Screen.Especialistas,
     Screen.Productos,
     Screen.Carrito,
     Screen.Perfil
+)
+
+val bottomNavItems = listOf(
+    Screen.Home
 )
