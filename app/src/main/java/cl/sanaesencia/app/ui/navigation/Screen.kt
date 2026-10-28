@@ -13,6 +13,7 @@ sealed class Screen(
     val title: String,
     val icon: ImageVector? = null
 ) {
+    object Auth : Screen("auth", "Autenticación")
     object Citas : Screen("citas", "Mis Citas", Icons.Default.CalendarMonth)
     object Especialistas : Screen("especialistas", "Especialistas", Icons.Default.MedicalServices)
     object Productos : Screen("productos", "Productos", Icons.Default.ShoppingBag)

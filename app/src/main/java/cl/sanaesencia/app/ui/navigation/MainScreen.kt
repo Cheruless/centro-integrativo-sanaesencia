@@ -18,6 +18,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import cl.sanaesencia.app.ui.auth.AuthScreen
 import cl.sanaesencia.app.ui.carrito.CarritoScreen
 import cl.sanaesencia.app.ui.citas.AgendarPaso1Screen
 import cl.sanaesencia.app.ui.citas.AgendarPaso2Screen
@@ -76,9 +77,19 @@ fun MainScreen(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Citas.route,
+            startDestination = Screen.Auth.route,
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable(Screen.Auth.route) {
+                AuthScreen(
+                    onLoginSuccess = {
+                        navController.navigate(Screen.Citas.route) {
+                            popUpTo(Screen.Auth.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             composable(Screen.Citas.route) {
                 CitasScreen(
                     viewModel = citaViewModel,
