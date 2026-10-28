@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,7 +20,9 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CarritoScreen() {
+fun CarritoScreen(
+    onMenuClick: () -> Unit = {}
+) {
     val coroutineScope = rememberCoroutineScope()
     val carritoItems by ServiceLocator.carritoRepository.obtenerCarritoFlow().collectAsState(initial = emptyList())
 
@@ -30,7 +33,12 @@ fun CarritoScreen() {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Carrito de Compras") }
+                title = { Text("Carrito de Compras") },
+                navigationIcon = {
+                    IconButton(onClick = onMenuClick) {
+                        Icon(imageVector = Icons.Default.Menu, contentDescription = "Menú")
+                    }
+                }
             )
         },
         bottomBar = {

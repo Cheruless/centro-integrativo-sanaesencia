@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonSearch
 import androidx.compose.material.icons.filled.Search
@@ -22,121 +23,128 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.sanaesencia.app.domain.model.Especialidad
 import cl.sanaesencia.app.domain.model.Especialista
 
-/**
- * Pantalla del Catálogo de Especialistas de Sanaesencia.
- * Incluye búsqueda por nombre, filtros por especialidad y tarjetas de profesional.
- * @author Exequiel
- */
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun EspecialistasScreen(
     viewModel: EspecialistaViewModel = viewModel(),
+    onMenuClick: () -> Unit = {},
     onAgendarCitaClick: (especialistaId: Int) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Header
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-            ),
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.fillMaxWidth()
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Especialistas") },
+                navigationIcon = {
+                    IconButton(onClick = onMenuClick) {
+                        Icon(imageVector = Icons.Default.Menu, contentDescription = "Menú")
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Catálogo de Especialistas",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Conoce a nuestros profesionales en psicología, masoterapia, aromaterapia y más.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Búsqueda por nombre
-        OutlinedTextField(
-            value = uiState.searchQuery,
-            onValueChange = { viewModel.onSearchQueryChange(it) },
-            label = { Text("Buscar por nombre...") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Chips de filtro por especialidad
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            item {
-                FilterChip(
-                    selected = uiState.especialidadFiltro == null,
-                    onClick = { viewModel.onEspecialidadFiltroChange(null) },
-                    label = { Text("Todas") }
-                )
-            }
-            items(Especialidad.entries.toList()) { especialidad ->
-                FilterChip(
-                    selected = uiState.especialidadFiltro == especialidad,
-                    onClick = {
-                        viewModel.onEspecialidadFiltroChange(
-                            if (uiState.especialidadFiltro == especialidad) null else especialidad
-                        )
-                    },
-                    label = { Text(especialidad.displayName) }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                ),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                CircularProgressIndicator()
-            }
-        } else if (uiState.especialistas.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.PersonSearch,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.outline
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
+                Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "No se encontraron profesionales",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.outline
+                        text = "Catálogo de Especialistas",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Conoce a nuestros profesionales en psicología, masoterapia, aromaterapia y más.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-        } else {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 80.dp)
-            ) {
-                items(uiState.especialistas, key = { it.id }) { especialista ->
-                    EspecialistaCard(
-                        especialista = especialista,
-                        onAgendarClick = { onAgendarCitaClick(especialista.id) }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = uiState.searchQuery,
+                onValueChange = { viewModel.onSearchQueryChange(it) },
+                label = { Text("Buscar por nombre...") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                item {
+                    FilterChip(
+                        selected = uiState.especialidadFiltro == null,
+                        onClick = { viewModel.onEspecialidadFiltroChange(null) },
+                        label = { Text("Todas") }
                     )
+                }
+                items(Especialidad.entries.toList()) { especialidad ->
+                    FilterChip(
+                        selected = uiState.especialidadFiltro == especialidad,
+                        onClick = {
+                            viewModel.onEspecialidadFiltroChange(
+                                if (uiState.especialidadFiltro == especialidad) null else especialidad
+                            )
+                        },
+                        label = { Text(especialidad.displayName) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            if (uiState.isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (uiState.especialistas.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.PersonSearch,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.outline
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "No se encontraron profesionales",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 80.dp)
+                ) {
+                    items(uiState.especialistas, key = { it.id }) { especialista ->
+                        EspecialistaCard(
+                            especialista = especialista,
+                            onAgendarClick = { onAgendarCitaClick(especialista.id) }
+                        )
+                    }
                 }
             }
         }
@@ -155,7 +163,6 @@ fun EspecialistaCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Avatar con iniciales
                 Box(
                     modifier = Modifier
                         .size(48.dp)

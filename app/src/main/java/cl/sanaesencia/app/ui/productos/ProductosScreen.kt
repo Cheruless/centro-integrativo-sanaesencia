@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,7 +26,9 @@ import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductosScreen() {
+fun ProductosScreen(
+    onMenuClick: () -> Unit = {}
+) {
     var productos by remember { mutableStateOf<List<Producto>>(emptyList()) }
     var productoSeleccionado by remember { mutableStateOf<Producto?>(null) }
 
@@ -44,7 +47,12 @@ fun ProductosScreen() {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Catálogo de Productos") }
+                    title = { Text("Catálogo de Productos") },
+                    navigationIcon = {
+                        IconButton(onClick = onMenuClick) {
+                            Icon(imageVector = Icons.Default.Menu, contentDescription = "Menú")
+                        }
+                    }
                 )
             }
         ) { padding ->
