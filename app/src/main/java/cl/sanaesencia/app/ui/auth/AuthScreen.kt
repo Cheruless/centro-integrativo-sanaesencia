@@ -23,22 +23,14 @@ fun AuthScreen(
     onLoginSuccess: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
-    var nombre by remember { mutableStateOf("") }
-    var rut by remember { mutableStateOf("") }
-    var correo by remember { mutableStateOf("") }
-    var telefono by remember { mutableStateOf("") }
+    var isLoginMode by remember { mutableStateOf(true) }
+    var rutLogin by remember { mutableStateOf("") }
+    var nombreRegister by remember { mutableStateOf("") }
+    var rutRegister by remember { mutableStateOf("") }
+    var correoRegister by remember { mutableStateOf("") }
+    var telefonoRegister by remember { mutableStateOf("") }
     var errorMensaje by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
-            val pacienteActual = ServiceLocator.pacienteRepository.getPacienteActual()
-            nombre = pacienteActual.nombreCorto
-            rut = pacienteActual.rut
-            correo = pacienteActual.email
-            telefono = pacienteActual.telefono
-        }
-    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -70,7 +62,7 @@ fun AuthScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Bienvenido a Sanaesencia",
+                text = "Sanaesencia",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
@@ -79,12 +71,40 @@ fun AuthScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Ingresa tus datos para continuar",
+                text = if (isLoginMode) "Inicia sesión con tu RUT" else "Crea tu cuenta de paciente",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            TabRow(
+                selectedTabIndex = if (isLoginMode) 0 else 1,
+                modifier = Modifier.fillMaxWidth(),
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                indicator = {}
+            ) {
+                Tab(
+                    selected = isLoginMode,
+                    onClick = {
+                        isLoginMode = true
+                        errorMensaje = null
+                    },
+                    modifier = Modifier.padding(vertical = 12.dp),
+                    text = { Text("Iniciar Sesión", fontWeight = FontWeight.Bold) }
+                )
+                Tab(
+                    selected = !isLoginMode,
+                    onClick = {
+                        isLoginMode = false
+                        errorMensaje = null
+                    },
+                    modifier = Modifier.padding(vertical = 12.dp),
+                    text = { Text("Registrarse", fontWeight = FontWeight.Bold) }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             if (errorMensaje != null) {
                 Surface(
@@ -102,78 +122,117 @@ fun AuthScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            OutlinedTextField(
-                value = nombre,
-                onValueChange = { nombre = it },
-                label = { Text("Nombre completo") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true
-            )
+            if (isLoginMode) {
+                OutlinedTextField(
+                    value = rutLogin,
+                    onValueChange = { rutLogin = it },
+                    label = { Text("RUT") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
+            } else {
+                OutlinedTextField(
+                    value = nombreRegister,
+                    onValueChange = { nombreRegister = it },
+                    label = { Text("Nombre completo") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = rut,
-                onValueChange = { rut = it },
-                label = { Text("RUT") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true
-            )
+                OutlinedTextField(
+                    value = rutRegister,
+                    onValueChange = { rutRegister = it },
+                    label = { Text("RUT") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = correo,
-                onValueChange = { correo = it },
-                label = { Text("Correo electrónico") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true
-            )
+                OutlinedTextField(
+                    value = correoRegister,
+                    onValueChange = { correoRegister = it },
+                    label = { Text("Correo electrónico") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = telefono,
-                onValueChange = { telefono = it },
-                label = { Text("Teléfono") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true
-            )
+                OutlinedTextField(
+                    value = telefonoRegister,
+                    onValueChange = { telefonoRegister = it },
+                    label = { Text("Teléfono") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
                 onClick = {
-                    if (nombre.isBlank() || rut.isBlank() || correo.isBlank() || telefono.isBlank()) {
-                        errorMensaje = "Por favor completa todos los campos"
-                        return@Button
-                    }
-                    isLoading = true
-                    coroutineScope.launch(Dispatchers.IO) {
-                        val partesNombre = nombre.trim().split(" ")
-                        val primerNombre = partesNombre.getOrNull(0) ?: ""
-                        val apellidoPaterno = partesNombre.getOrNull(1) ?: ""
-                        val apellidoMaterno = partesNombre.getOrNull(2) ?: ""
+                    errorMensaje = null
+                    if (isLoginMode) {
+                        if (rutLogin.isBlank()) {
+                            errorMensaje = "Por favor ingresa tu RUT"
+                            return@Button
+                        }
+                        isLoading = true
+                        coroutineScope.launch(Dispatchers.IO) {
+                            val pacienteEncontrado = ServiceLocator.pacienteRepository.getPacienteByRut(rutLogin.trim())
+                            if (pacienteEncontrado != null) {
+                                ServiceLocator.pacienteRepository.setPacienteActual(pacienteEncontrado.id)
+                                withContext(Dispatchers.Main) {
+                                    isLoading = false
+                                    onLoginSuccess()
+                                }
+                            } else {
+                                withContext(Dispatchers.Main) {
+                                    isLoading = false
+                                    errorMensaje = "RUT no registrado. Debes registrarte primero."
+                                }
+                            }
+                        }
+                    } else {
+                        if (nombreRegister.isBlank() || rutRegister.isBlank() || correoRegister.isBlank() || telefonoRegister.isBlank()) {
+                            errorMensaje = "Por favor completa todos los campos"
+                            return@Button
+                        }
+                        isLoading = true
+                        coroutineScope.launch(Dispatchers.IO) {
+                            val partesNombre = nombreRegister.trim().split(" ")
+                            val primerNombre = partesNombre.getOrNull(0) ?: ""
+                            val apellidoPaterno = partesNombre.getOrNull(1) ?: ""
+                            val apellidoMaterno = partesNombre.getOrNull(2) ?: ""
 
-                        val paciente = Paciente(
-                            id = 1,
-                            rut = rut,
-                            primerNombre = primerNombre,
-                            segundoNombre = null,
-                            apellidoPaterno = apellidoPaterno,
-                            apellidoMaterno = apellidoMaterno,
-                            email = correo,
-                            telefono = telefono,
-                            fechaNacimiento = null
-                        )
-                        ServiceLocator.pacienteRepository.updatePaciente(paciente)
-                        withContext(Dispatchers.Main) {
-                            isLoading = false
-                            onLoginSuccess()
+                            val paciente = Paciente(
+                                id = 0,
+                                rut = rutRegister.trim(),
+                                primerNombre = primerNombre,
+                                segundoNombre = null,
+                                apellidoPaterno = apellidoPaterno,
+                                apellidoMaterno = apellidoMaterno,
+                                email = correoRegister.trim(),
+                                telefono = telefonoRegister.trim(),
+                                fechaNacimiento = null
+                            )
+                            ServiceLocator.pacienteRepository.updatePaciente(paciente)
+                            val registrado = ServiceLocator.pacienteRepository.getPacienteByRut(rutRegister.trim())
+                            if (registrado != null) {
+                                ServiceLocator.pacienteRepository.setPacienteActual(registrado.id)
+                            }
+                            withContext(Dispatchers.Main) {
+                                isLoading = false
+                                onLoginSuccess()
+                            }
                         }
                     }
                 },
@@ -190,7 +249,7 @@ fun AuthScreen(
                     )
                 } else {
                     Text(
-                        text = "Comenzar",
+                        text = if (isLoginMode) "Ingresar" else "Registrarse",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )

@@ -37,7 +37,7 @@ object ServiceLocator {
     }
 
     val pacienteRepository: PacienteRepository by lazy {
-        RoomPacienteRepository(database.pacienteDao)
+        RoomPacienteRepository(database.pacienteDao, database.sesionDao)
     }
 
     val especialistaRepository: EspecialistaRepository by lazy {

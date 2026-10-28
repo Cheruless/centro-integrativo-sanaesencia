@@ -9,8 +9,8 @@ import cl.sanaesencia.app.domain.model.Paciente
 import cl.sanaesencia.app.domain.model.Producto
 
 @Database(
-    entities = [Especialista::class, Producto::class, Paciente::class, CitaEntity::class, ItemCarrito::class],
-    version = 2,
+    entities = [Especialista::class, Producto::class, Paciente::class, CitaEntity::class, ItemCarrito::class, SesionEntity::class],
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -20,5 +20,6 @@ abstract class SanaesenciaDatabase : RoomDatabase() {
     abstract val productoDao: ProductoDao
     abstract val pacienteDao: PacienteDao
     abstract val citaDao: CitaDao
+    abstract val sesionDao: SesionDao
     abstract fun carritoDao(): CarritoDao
 }
