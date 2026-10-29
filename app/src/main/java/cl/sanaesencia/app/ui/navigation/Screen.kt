@@ -35,6 +35,8 @@ sealed class Screen(
     object ProcesandoPago : Screen("procesando_pago/{citaId}", "Procesando pago") {
         fun createRoute(citaId: Int) = "procesando_pago/$citaId"
     }
+
+    object ProcesandoPagoCarrito : Screen("procesando_pago_carrito", "Procesando pago")
 }
 
 val drawerNavItems = listOf(

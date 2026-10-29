@@ -8,7 +8,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,7 +22,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cl.sanaesencia.app.data.ServiceLocator
-import cl.sanaesencia.app.domain.model.ItemCarrito
 import cl.sanaesencia.app.domain.model.Producto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,6 +35,8 @@ fun ProductoDetalleScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    var cantidad by remember { mutableStateOf(1) }
+    val sinStock = producto.stock <= 0
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -63,25 +66,25 @@ fun ProductoDetalleScreen(
                 ) {
                     ExtendedFloatingActionButton(
                         onClick = {
+                            if (sinStock) return@ExtendedFloatingActionButton
                             coroutineScope.launch(Dispatchers.IO) {
-                                val item = ItemCarrito(
+                                ServiceLocator.carritoRepository.agregarOIncrementar(
                                     productoId = producto.id,
-                                    nombreProducto = producto.nombre,
+                                    nombre = producto.nombre,
                                     precio = producto.precio,
-                                    cantidad = 1,
-                                    imagenResId = producto.imagenResId
+                                    imagenResId = producto.imagenResId,
+                                    cantidad = cantidad
                                 )
-                                ServiceLocator.carritoRepository.insertarItem(item)
                                 withContext(Dispatchers.Main) {
-                                    snackbarHostState.showSnackbar("Producto añadido al carro")
+                                    snackbarHostState.showSnackbar("Añadido al carro: $cantidad x ${producto.nombre}")
                                 }
                             }
                         },
                         icon = { Icon(Icons.Default.ShoppingCart, contentDescription = null) },
-                        text = { Text(text = "Añadir al carro") },
+                        text = { Text(text = if (sinStock) "Sin stock" else "Añadir al carro") },
                         modifier = Modifier.fillMaxWidth(),
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
+                        containerColor = if (sinStock) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primary,
+                        contentColor = if (sinStock) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }
@@ -162,9 +165,49 @@ fun ProductoDetalleScreen(
                 Text(
                     text = producto.descripcion,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(bottom = 24.dp)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                // Contador de cantidad
+                if (!sinStock) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Cantidad",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            FilledTonalIconButton(
+                                onClick = { if (cantidad > 1) cantidad-- },
+                                enabled = cantidad > 1
+                            ) {
+                                Icon(Icons.Default.Remove, contentDescription = "Restar")
+                            }
+                            Text(
+                                text = cantidad.toString(),
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            FilledTonalIconButton(
+                                onClick = { if (cantidad < producto.stock) cantidad++ },
+                                enabled = cantidad < producto.stock
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "Sumar")
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.padding(bottom = 24.dp))
             }
         }
     }

@@ -27,7 +27,6 @@ object ServiceLocator {
                 "sanaesencia.db"
             )
                 .addCallback(SeedCallback())
-                .fallbackToDestructiveMigration(true)
                 .build()
         }
     }
@@ -49,6 +48,6 @@ object ServiceLocator {
     }
 
     val carritoRepository: CarritoRepository by lazy {
-        RoomCarritoRepository(database.carritoDao())
+        RoomCarritoRepository(database.carritoDao, database.productoDao)
     }
 }

@@ -1,5 +1,9 @@
 package cl.sanaesencia.app.ui.navigation
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -8,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -21,8 +26,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import cl.sanaesencia.app.data.ServiceLocator
 import cl.sanaesencia.app.domain.model.Paciente
+import cl.sanaesencia.app.ui.components.PacienteAvatar
 import cl.sanaesencia.app.ui.auth.AuthScreen
 import cl.sanaesencia.app.ui.carrito.CarritoScreen
+import cl.sanaesencia.app.ui.carrito.ProcesandoPagoCarritoScreen
 import cl.sanaesencia.app.ui.citas.AgendarPaso1Screen
 import cl.sanaesencia.app.ui.citas.AgendarPaso2Screen
 import cl.sanaesencia.app.ui.citas.AgendarPaso3Screen
@@ -45,15 +52,18 @@ fun MainScreen(
     citaViewModel: CitaViewModel = viewModel(),
     especialistaViewModel: EspecialistaViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
     var paciente by remember { mutableStateOf<Paciente?>(null) }
-    LaunchedEffect(currentRoute) {
-        withContext(Dispatchers.IO) {
-            paciente = ServiceLocator.pacienteRepository.getPacienteActual()
+    LaunchedEffect(currentRoute, drawerState.isOpen) {
+        if (drawerState.isOpen) {
+            withContext(Dispatchers.IO) {
+                paciente = ServiceLocator.pacienteRepository.getPacienteActual()
+            }
         }
     }
 
@@ -63,6 +73,21 @@ fun MainScreen(
     }
 
     val showBottomBar = drawerNavItems.any { it.route == currentRoute }
+
+    fun Context.findActivity(): Activity {
+        var context = this
+        while (context is ContextWrapper) {
+            if (context is Activity) return context
+            context = context.baseContext
+        }
+        throw IllegalStateException("No se encontró la Activity")
+    }
+
+    if (currentRoute == Screen.Home.route) {
+        BackHandler {
+            context.findActivity().finish()
+        }
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -75,20 +100,10 @@ fun MainScreen(
                         .padding(horizontal = 24.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = paciente?.primerNombre?.firstOrNull()?.uppercase() ?: "S",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
+                    PacienteAvatar(
+                        paciente = paciente,
+                        size = 64.dp
+                    )
                     Text(
                         text = paciente?.nombreCompleto ?: "Paciente Sanaesencia",
                         style = MaterialTheme.typography.titleMedium,
@@ -288,7 +303,19 @@ fun MainScreen(
                 }
                 composable(Screen.Carrito.route) {
                     CarritoScreen(
-                        onMenuClick = { coroutineScope.launch { drawerState.open() } }
+                        onMenuClick = { coroutineScope.launch { drawerState.open() } },
+                        onProcederPagoClick = {
+                            navController.navigateSafe(Screen.ProcesandoPagoCarrito.route)
+                        }
+                    )
+                }
+                composable(Screen.ProcesandoPagoCarrito.route) {
+                    ProcesandoPagoCarritoScreen(
+                        onPagoCompletado = {
+                            navController.navigateSafe(Screen.Productos.route) {
+                                popUpTo(Screen.Carrito.route) { inclusive = true }
+                            }
+                        }
                     )
                 }
                 composable(Screen.Perfil.route) {

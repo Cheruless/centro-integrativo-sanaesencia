@@ -21,7 +21,8 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CarritoScreen(
-    onMenuClick: () -> Unit = {}
+    onMenuClick: () -> Unit = {},
+    onProcederPagoClick: () -> Unit = {}
 ) {
     val coroutineScope = rememberCoroutineScope()
     val carritoItems by ServiceLocator.carritoRepository.obtenerCarritoFlow().collectAsState(initial = emptyList())
@@ -71,8 +72,7 @@ fun CarritoScreen(
                         }
 
                         Button(
-                            onClick = {
-                            },
+                            onClick = onProcederPagoClick,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp)
                         ) {
