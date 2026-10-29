@@ -13,17 +13,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import cl.sanaesencia.app.data.ServiceLocator
 import cl.sanaesencia.app.domain.model.Paciente
+import cl.sanaesencia.app.ui.components.RutVisualTransformation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,53 +31,6 @@ fun hashPassword(password: String): String =
     MessageDigest.getInstance("SHA-256")
         .digest(password.toByteArray())
         .joinToString("") { "%02x".format(it) }
-
-/**
- * VisualTransformation que agrega puntos al RUT sin romper el cursor.
- * El valor real se mantiene como solo dígitos ("12345678").
- * La visualización muestra "12.345.678".
- */
-class RutVisualTransformation : VisualTransformation {
-    override fun filter(text: AnnotatedString): TransformedText {
-        val raw = text.text
-        val formatted = formatRun(raw)
-        return TransformedText(AnnotatedString(formatted), RutOffsetMapping(raw))
-    }
-
-    private class RutOffsetMapping(private val raw: String) : OffsetMapping {
-        override fun originalToTransformed(offset: Int): Int {
-            var transformed = 0
-            var digitCount = 0
-            for (i in 0 until minOf(offset, raw.length)) {
-                digitCount++
-                transformed++
-                // Insertar punto cada 3 dígitos desde la derecha
-                if ((raw.length - digitCount) % 3 == 0 && digitCount < raw.length) {
-                    transformed++
-                }
-            }
-            return transformed
-        }
-
-        override fun transformedToOriginal(offset: Int): Int {
-            var digitCount = 0
-            val formatted = formatRun(raw)
-            for (i in 0 until minOf(offset, formatted.length)) {
-                if (formatted[i].isDigit()) digitCount++
-            }
-            return digitCount
-        }
-    }
-
-    companion object {
-        /** Formatea run numérico con puntos: "20781681" → "20.781.681". */
-        fun formatRun(run: String): String {
-            if (run.isEmpty()) return ""
-            val reversed = run.reversed()
-            return reversed.chunked(3).joinToString(".").reversed()
-        }
-    }
-}
 
 @Composable
 fun AuthScreen(
@@ -197,7 +147,7 @@ fun AuthScreen(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     color = MaterialTheme.colorScheme.errorContainer,
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Text(
                         text = errorMensaje!!,
@@ -393,7 +343,7 @@ private fun LoginForm(
             label = { Text("RUT") },
             placeholder = { Text("12.345.678") },
             modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(16.dp),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             visualTransformation = RutVisualTransformation()
@@ -404,7 +354,7 @@ private fun LoginForm(
             label = { Text("DV") },
             placeholder = { Text("K") },
             modifier = Modifier.width(80.dp),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(16.dp),
             singleLine = true
         )
     }
@@ -416,7 +366,7 @@ private fun LoginForm(
         onValueChange = onPasswordChange,
         label = { Text("Contraseña") },
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         singleLine = true,
         visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
@@ -452,7 +402,7 @@ private fun RegisterForm(
         onValueChange = onPrimerNombre,
         label = { Text("Primer Nombre") },
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         singleLine = true
     )
     Spacer(modifier = Modifier.height(12.dp))
@@ -462,7 +412,7 @@ private fun RegisterForm(
         onValueChange = onSegundoNombre,
         label = { Text("Segundo Nombre (opcional)") },
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         singleLine = true
     )
     Spacer(modifier = Modifier.height(12.dp))
@@ -476,7 +426,7 @@ private fun RegisterForm(
             onValueChange = onApellidoPaterno,
             label = { Text("Apellido Paterno") },
             modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(16.dp),
             singleLine = true
         )
         OutlinedTextField(
@@ -484,7 +434,7 @@ private fun RegisterForm(
             onValueChange = onApellidoMaterno,
             label = { Text("Apellido Materno") },
             modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(16.dp),
             singleLine = true
         )
     }
@@ -501,7 +451,7 @@ private fun RegisterForm(
             label = { Text("RUT") },
             placeholder = { Text("12.345.678") },
             modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(16.dp),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             visualTransformation = RutVisualTransformation()
@@ -512,7 +462,7 @@ private fun RegisterForm(
             label = { Text("DV") },
             placeholder = { Text("K") },
             modifier = Modifier.width(80.dp),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(16.dp),
             singleLine = true
         )
     }
@@ -523,7 +473,7 @@ private fun RegisterForm(
         onValueChange = onEmail,
         label = { Text("Correo electrónico") },
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
     )
@@ -536,7 +486,7 @@ private fun RegisterForm(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Surface(
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.surfaceVariant,
             modifier = Modifier.height(56.dp)
         ) {
@@ -550,7 +500,7 @@ private fun RegisterForm(
             label = { Text("Teléfono") },
             placeholder = { Text("912345678") },
             modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(16.dp),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
@@ -579,7 +529,7 @@ private fun RegisterForm(
                 label = { Text("Año") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = anioExpanded) },
                 modifier = Modifier.fillMaxWidth().menuAnchor(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(16.dp)
             )
             ExposedDropdownMenu(expanded = anioExpanded, onDismissRequest = { anioExpanded = false }) {
                 val currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
@@ -613,7 +563,7 @@ private fun RegisterForm(
                 label = { Text("Mes") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = mesExpanded) },
                 modifier = Modifier.fillMaxWidth().menuAnchor(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(16.dp)
             )
             ExposedDropdownMenu(expanded = mesExpanded, onDismissRequest = { mesExpanded = false }) {
                 meses.forEachIndexed { index, nombre ->
@@ -645,7 +595,7 @@ private fun RegisterForm(
             label = { Text("Día") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = diaExpanded) },
             modifier = Modifier.fillMaxWidth().menuAnchor(),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(16.dp)
         )
         ExposedDropdownMenu(expanded = diaExpanded, onDismissRequest = { diaExpanded = false }) {
             val maxDia = diasEnMes(mes.toIntOrNull() ?: 1, anio.toIntOrNull() ?: 2000)
@@ -668,7 +618,7 @@ private fun RegisterForm(
         onValueChange = onPassword,
         label = { Text("Contraseña") },
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         singleLine = true,
         visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {

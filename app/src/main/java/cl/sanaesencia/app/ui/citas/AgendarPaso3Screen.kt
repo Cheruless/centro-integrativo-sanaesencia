@@ -134,7 +134,7 @@ fun AgendarPaso3Screen(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer
                     ),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(24.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
@@ -167,7 +167,7 @@ fun AgendarPaso3Screen(
                     .fillMaxWidth()
                     .height(52.dp),
                 enabled = !formState.isSubmitting,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(24.dp)
             ) {
                 Text(
                     text = "Confirmar y pagar",
@@ -188,7 +188,7 @@ fun AgendarPaso3Screen(
                     .fillMaxWidth()
                     .height(52.dp),
                 enabled = !formState.isSubmitting,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(24.dp)
             ) {
                 Text(
                     text = "Confirmar",

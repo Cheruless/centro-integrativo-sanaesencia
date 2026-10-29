@@ -74,7 +74,7 @@ fun CarritoScreen(
                         Button(
                             onClick = onProcederPagoClick,
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(24.dp)
                         ) {
                             Text("Proceder al Pago")
                         }
@@ -120,7 +120,7 @@ fun CarritoScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(24.dp)
                     ) {
                         Row(
                             modifier = Modifier
