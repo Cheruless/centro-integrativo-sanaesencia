@@ -21,5 +21,5 @@ abstract class SanaesenciaDatabase : RoomDatabase() {
     abstract val pacienteDao: PacienteDao
     abstract val citaDao: CitaDao
     abstract val sesionDao: SesionDao
-    abstract fun carritoDao(): CarritoDao
+    abstract val carritoDao: CarritoDao
 }
