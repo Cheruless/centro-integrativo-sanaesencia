@@ -80,7 +80,7 @@ fun AgendarPaso1Screen(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
                     ),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(24.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -135,7 +135,7 @@ private fun EspecialidadCard(
     OutlinedCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.outlinedCardColors(
             containerColor = if (selected)
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)

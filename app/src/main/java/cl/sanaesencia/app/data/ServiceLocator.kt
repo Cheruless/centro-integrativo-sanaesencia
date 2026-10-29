@@ -4,18 +4,21 @@ import android.content.Context
 import androidx.room.Room
 import cl.sanaesencia.app.data.local.SanaesenciaDatabase
 import cl.sanaesencia.app.data.local.SeedCallback
-import cl.sanaesencia.app.data.repository.*
-import cl.sanaesencia.app.domain.repository.*
+import cl.sanaesencia.app.data.repository.RoomCitaRepository
+import cl.sanaesencia.app.data.repository.RoomEspecialistaRepository
+import cl.sanaesencia.app.data.repository.RoomPacienteRepository
+import cl.sanaesencia.app.data.repository.RoomProductoRepository
+import cl.sanaesencia.app.data.repository.RoomCarritoRepository
+import cl.sanaesencia.app.domain.repository.CitaRepository
+import cl.sanaesencia.app.domain.repository.EspecialistaRepository
+import cl.sanaesencia.app.domain.repository.PacienteRepository
+import cl.sanaesencia.app.domain.repository.ProductoRepository
+import cl.sanaesencia.app.domain.repository.CarritoRepository
 
-/**
- * Proveedor simple de repositorios. Inicializa la base de datos Room
- * una sola vez y crea los repositorios que inyectan los ViewModels.
- */
 object ServiceLocator {
 
     private lateinit var database: SanaesenciaDatabase
 
-    /** Inicializa la base de datos. Llamar una vez desde MainActivity o Application. */
     fun init(context: Context) {
         if (!::database.isInitialized) {
             database = Room.databaseBuilder(
@@ -33,7 +36,7 @@ object ServiceLocator {
     }
 
     val pacienteRepository: PacienteRepository by lazy {
-        RoomPacienteRepository(database.pacienteDao)
+        RoomPacienteRepository(database.pacienteDao, database.sesionDao)
     }
 
     val especialistaRepository: EspecialistaRepository by lazy {
@@ -42,5 +45,9 @@ object ServiceLocator {
 
     val citaRepository: CitaRepository by lazy {
         RoomCitaRepository(database.citaDao, database.especialistaDao, database.pacienteDao)
+    }
+
+    val carritoRepository: CarritoRepository by lazy {
+        RoomCarritoRepository(database.carritoDao, database.productoDao)
     }
 }

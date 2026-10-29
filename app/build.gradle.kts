@@ -58,6 +58,12 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
+    // Coil (carga de imágenes)
+    implementation(libs.coil.compose)
+
+    // Lottie (animaciones)
+    implementation(libs.lottie.compose)
+
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

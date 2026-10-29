@@ -18,6 +18,9 @@ interface ProductoDao {
     @Query("SELECT * FROM productos WHERE categoriaEspecialidad LIKE '%' || :categoria || '%'")
     suspend fun getByCategoria(categoria: String): List<Producto>
 
+    @Query("UPDATE productos SET stock = stock - :cantidad WHERE id = :id AND stock >= :cantidad")
+    suspend fun descontarStock(id: Int, cantidad: Int): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(productos: List<Producto>)
 }

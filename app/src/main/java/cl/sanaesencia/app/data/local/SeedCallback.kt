@@ -22,8 +22,8 @@ class SeedCallback : RoomDatabase.Callback() {
     private fun seedData(db: SupportSQLiteDatabase) {
         // Paciente
         db.execSQL(
-            "INSERT INTO pacientes (id, rut, primerNombre, segundoNombre, apellidoPaterno, apellidoMaterno, email, telefono, fechaNacimiento) " +
-                "VALUES (101, '20.781.681-7', 'Exequiel', 'Raúl', 'Pulgar', 'Cerda', 'exequiel.pulgar@gmail.com', '+56 9 9876 1234', '2001-05-25')"
+            "INSERT INTO pacientes (id, run, runDv, primerNombre, segundoNombre, apellidoPaterno, apellidoMaterno, email, telefono, fechaNacimiento, direccion, passwordHash) " +
+                "VALUES (101, '20781681', '7', 'Exequiel', 'Raúl', 'Pulgar', 'Cerda', 'exequiel.pulgar@gmail.com', '+56 9 9876 1234', '2001-05-25', 'Av. Siempreviva 742', '')"
         )
 
         // Especialistas
