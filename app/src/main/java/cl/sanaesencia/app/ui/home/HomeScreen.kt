@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cl.sanaesencia.app.data.ServiceLocator
 import cl.sanaesencia.app.domain.model.Cita
+import cl.sanaesencia.app.ui.components.PacienteAvatar
 import cl.sanaesencia.app.domain.model.EstadoCita
 import cl.sanaesencia.app.domain.model.Paciente
 import kotlinx.coroutines.Dispatchers
@@ -81,20 +82,10 @@ fun HomeScreen(
                         .padding(20.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = paciente?.primerNombre?.firstOrNull()?.uppercase() ?: "S",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
+                    PacienteAvatar(
+                        paciente = paciente,
+                        size = 56.dp
+                    )
 
                     Spacer(modifier = Modifier.width(16.dp))
 
