@@ -159,7 +159,7 @@ fun EspecialistaCard(
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(24.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -214,7 +214,7 @@ fun EspecialistaCard(
             Button(
                 onClick = onAgendarClick,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(24.dp)
             ) {
                 Icon(Icons.Default.Person, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))

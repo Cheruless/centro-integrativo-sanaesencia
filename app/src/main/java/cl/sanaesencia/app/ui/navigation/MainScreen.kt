@@ -4,6 +4,9 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -181,7 +184,9 @@ fun MainScreen(
             NavHost(
                 navController = navController,
                 startDestination = Screen.Auth.route,
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(innerPadding),
+                enterTransition = { fadeIn(animationSpec = tween(300)) },
+                exitTransition = { fadeOut(animationSpec = tween(300)) }
             ) {
                 composable(Screen.Auth.route) {
                     AuthScreen(

@@ -112,7 +112,7 @@ fun AgendarPaso2Screen(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                     ),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(24.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
@@ -223,7 +223,7 @@ private fun EspecialistaSelectCard(
     OutlinedCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.outlinedCardColors(
             containerColor = if (selected)
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
