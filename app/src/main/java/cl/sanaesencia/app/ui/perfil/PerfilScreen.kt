@@ -4,9 +4,13 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
 import android.location.Geocoder
 import android.location.LocationManager
 import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -35,7 +39,66 @@ import cl.sanaesencia.app.domain.model.Paciente
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
 import java.util.Locale
+import androidx.core.net.toUri
+
+private fun guardarBitmapEnAlmacenamientoInterno(context: Context, bitmap: Bitmap, pacienteId: Int): Uri? {
+    return try {
+        val directory = File(context.filesDir, "profile_images")
+        if (!directory.exists()) {
+            directory.mkdirs()
+        }
+        val file = File(directory, "paciente_${pacienteId}_profile.jpg")
+        FileOutputStream(file).use { out ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+        }
+        Uri.fromFile(file)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+private fun guardarUriEnAlmacenamientoInterno(context: Context, sourceUri: Uri, pacienteId: Int): Uri? {
+    return try {
+        val inputStream = context.contentResolver.openInputStream(sourceUri) ?: return null
+        val directory = File(context.filesDir, "profile_images")
+        if (!directory.exists()) {
+            directory.mkdirs()
+        }
+        val file = File(directory, "paciente_${pacienteId}_profile.jpg")
+        FileOutputStream(file).use { output ->
+            inputStream.copyTo(output)
+        }
+        inputStream.close()
+        Uri.fromFile(file)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+private fun cargarBitmapDesdeUri(context: Context, uriStr: String?): Bitmap? {
+    if (uriStr.isNullOrBlank()) return null
+    return try {
+        val uri = uriStr.toUri()
+        val source = ImageDecoder.createSource(context.contentResolver, uri)
+        ImageDecoder.decodeBitmap(source)
+    } catch (e: Exception) {
+        try {
+            val path = uriStr.toUri().path
+            if (path != null && File(path).exists()) {
+                BitmapFactory.decodeFile(path)
+            } else {
+                null
+            }
+        } catch (e2: Exception) {
+            null
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,7 +109,8 @@ fun PerfilScreen(
     val coroutineScope = rememberCoroutineScope()
     var pacienteId by remember { mutableStateOf(0) }
     var nombre by remember { mutableStateOf("") }
-    var rut by remember { mutableStateOf("") }
+    var run by remember { mutableStateOf("") }
+    var runDv by remember { mutableStateOf("") }
     var correo by remember { mutableStateOf("") }
     var telefono by remember { mutableStateOf("") }
     var direccion by remember { mutableStateOf("") }
@@ -104,29 +168,36 @@ fun PerfilScreen(
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let {
-            fotoUriStr = it.toString()
-            bitmapPreview = null
+        uri?.let { sourceUri ->
             coroutineScope.launch(Dispatchers.IO) {
-                val pacienteActual = ServiceLocator.pacienteRepository.getPacienteActual()
-                val partesNombre = nombre.trim().split(" ")
-                val primerNombre = partesNombre.getOrNull(0) ?: ""
-                val apellidoPaterno = partesNombre.getOrNull(1) ?: ""
-                val apellidoMaterno = partesNombre.getOrNull(2) ?: ""
+                val savedUri = guardarUriEnAlmacenamientoInterno(context, sourceUri, pacienteId)
+                if (savedUri != null) {
+                    val bitmap = cargarBitmapDesdeUri(context, savedUri.toString())
+                    val pacienteActual = ServiceLocator.pacienteRepository.getPacienteActual()
+                    val partesNombre = nombre.trim().split("\\s+".toRegex())
+                    val primerNombre = partesNombre.getOrNull(0) ?: ""
+                    val segundoNombre = if (partesNombre.size > 3) partesNombre.getOrNull(1) else null
+                    val apellidoPaterno = if (partesNombre.size > 3) partesNombre.getOrNull(2) ?: "" else partesNombre.getOrNull(1) ?: ""
+                    val apellidoMaterno = if (partesNombre.size > 3) partesNombre.getOrNull(3) ?: "" else partesNombre.getOrNull(2) ?: ""
 
-                val actualizado = Paciente(
-                    id = pacienteId,
-                    rut = rut,
-                    primerNombre = primerNombre,
-                    segundoNombre = pacienteActual.segundoNombre,
-                    apellidoPaterno = apellidoPaterno,
-                    apellidoMaterno = apellidoMaterno,
-                    email = correo,
-                    telefono = telefono,
-                    fechaNacimiento = pacienteActual.fechaNacimiento,
-                    fotoUri = fotoUriStr
-                )
-                ServiceLocator.pacienteRepository.updatePaciente(actualizado)
+                    val actualizado = pacienteActual.copy(
+                        id = pacienteId,
+                        primerNombre = primerNombre,
+                        segundoNombre = segundoNombre,
+                        apellidoPaterno = apellidoPaterno,
+                        apellidoMaterno = apellidoMaterno,
+                        email = correo,
+                        telefono = telefono,
+                        direccion = direccion,
+                        fotoUri = savedUri.toString()
+                    )
+                    ServiceLocator.pacienteRepository.updatePaciente(actualizado)
+
+                    withContext(Dispatchers.Main) {
+                        fotoUriStr = savedUri.toString()
+                        bitmapPreview = bitmap
+                    }
+                }
             }
         }
     }
@@ -134,29 +205,34 @@ fun PerfilScreen(
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap: Bitmap? ->
-        bitmap?.let {
-            bitmapPreview = it
-            fotoUriStr = null
+        bitmap?.let { capturedBitmap ->
             coroutineScope.launch(Dispatchers.IO) {
+                val savedUri = guardarBitmapEnAlmacenamientoInterno(context, capturedBitmap, pacienteId)
+                val uriString = savedUri?.toString()
                 val pacienteActual = ServiceLocator.pacienteRepository.getPacienteActual()
-                val partesNombre = nombre.trim().split(" ")
+                val partesNombre = nombre.trim().split("\\s+".toRegex())
                 val primerNombre = partesNombre.getOrNull(0) ?: ""
-                val apellidoPaterno = partesNombre.getOrNull(1) ?: ""
-                val apellidoMaterno = partesNombre.getOrNull(2) ?: ""
+                val segundoNombre = if (partesNombre.size > 3) partesNombre.getOrNull(1) else null
+                val apellidoPaterno = if (partesNombre.size > 3) partesNombre.getOrNull(2) ?: "" else partesNombre.getOrNull(1) ?: ""
+                val apellidoMaterno = if (partesNombre.size > 3) partesNombre.getOrNull(3) ?: "" else partesNombre.getOrNull(2) ?: ""
 
-                val actualizado = Paciente(
+                val actualizado = pacienteActual.copy(
                     id = pacienteId,
-                    rut = rut,
                     primerNombre = primerNombre,
-                    segundoNombre = pacienteActual.segundoNombre,
+                    segundoNombre = segundoNombre,
                     apellidoPaterno = apellidoPaterno,
                     apellidoMaterno = apellidoMaterno,
                     email = correo,
                     telefono = telefono,
-                    fechaNacimiento = pacienteActual.fechaNacimiento,
-                    fotoUri = null
+                    direccion = direccion,
+                    fotoUri = uriString
                 )
                 ServiceLocator.pacienteRepository.updatePaciente(actualizado)
+
+                withContext(Dispatchers.Main) {
+                    fotoUriStr = uriString
+                    bitmapPreview = capturedBitmap
+                }
             }
         }
     }
@@ -173,11 +249,18 @@ fun PerfilScreen(
         withContext(Dispatchers.IO) {
             val paciente = ServiceLocator.pacienteRepository.getPacienteActual()
             pacienteId = paciente.id
-            nombre = paciente.nombreCorto
-            rut = paciente.rut
+            nombre = paciente.nombreCompleto
+            run = paciente.run
+            runDv = paciente.runDv
             correo = paciente.email
+            direccion = paciente.direccion ?: ""
             telefono = paciente.telefono
             fotoUriStr = paciente.fotoUri
+
+            val bitmap = cargarBitmapDesdeUri(context, paciente.fotoUri)
+            withContext(Dispatchers.Main) {
+                bitmapPreview = bitmap
+            }
         }
     }
 
@@ -287,8 +370,9 @@ fun PerfilScreen(
             )
 
             OutlinedTextField(
-                value = rut,
-                onValueChange = { rut = it },
+                value = Paciente.formatearRut(run, runDv),
+                onValueChange = {},
+                readOnly = true,
                 label = { Text("RUT") },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -342,21 +426,22 @@ fun PerfilScreen(
             Button(
                 onClick = {
                     coroutineScope.launch(Dispatchers.IO) {
-                        val nombresPartes = nombre.trim().split(" ")
-                        val primerNombre = nombresPartes.getOrNull(0) ?: ""
-                        val apellidoPaterno = nombresPartes.getOrNull(1) ?: ""
-                        val apellidoMaterno = nombresPartes.getOrNull(2) ?: ""
+                        val pacienteActual = ServiceLocator.pacienteRepository.getPacienteActual()
+                        val partesNombre = nombre.trim().split("\\s+".toRegex())
+                        val primerNombre = partesNombre.getOrNull(0) ?: ""
+                        val segundoNombre = if (partesNombre.size > 3) partesNombre.getOrNull(1) else null
+                        val apellidoPaterno = if (partesNombre.size > 3) partesNombre.getOrNull(2) ?: "" else partesNombre.getOrNull(1) ?: ""
+                        val apellidoMaterno = if (partesNombre.size > 3) partesNombre.getOrNull(3) ?: "" else partesNombre.getOrNull(2) ?: ""
 
-                        val pacienteActualizado = Paciente(
+                        val pacienteActualizado = pacienteActual.copy(
                             id = pacienteId,
-                            rut = rut,
                             primerNombre = primerNombre,
-                            segundoNombre = null,
+                            segundoNombre = segundoNombre,
                             apellidoPaterno = apellidoPaterno,
                             apellidoMaterno = apellidoMaterno,
                             email = correo,
                             telefono = telefono,
-                            fechaNacimiento = null,
+                            direccion = direccion,
                             fotoUri = fotoUriStr
                         )
                         ServiceLocator.pacienteRepository.updatePaciente(pacienteActualizado)

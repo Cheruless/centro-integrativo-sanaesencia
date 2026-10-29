@@ -15,8 +15,8 @@ interface PacienteDao {
     @Query("SELECT * FROM pacientes WHERE id = :id")
     suspend fun getById(id: Int): Paciente?
 
-    @Query("SELECT * FROM pacientes WHERE rut = :rut")
-    suspend fun getByRut(rut: String): Paciente?
+    @Query("SELECT * FROM pacientes WHERE run = :run")
+    suspend fun getByRun(run: String): Paciente?
 
     @Upsert
     suspend fun update(paciente: Paciente)

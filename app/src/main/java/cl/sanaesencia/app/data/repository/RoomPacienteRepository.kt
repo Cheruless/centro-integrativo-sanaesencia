@@ -8,6 +8,10 @@ import cl.sanaesencia.app.domain.repository.PacienteRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 
+/**
+ * Repositorio Room para pacientes. Gestiona el paciente activo
+ * de la sesión mediante SesionDao.
+ */
 class RoomPacienteRepository(
     private val dao: PacienteDao,
     private val sesionDao: SesionDao
@@ -20,8 +24,8 @@ class RoomPacienteRepository(
             paciente ?: dao.getActual() ?: createDefault()
         }
 
-    override fun getPacienteByRut(rut: String): Paciente? =
-        runBlocking(Dispatchers.IO) { dao.getByRut(rut) }
+    override fun getPacienteByRun(run: String): Paciente? =
+        runBlocking(Dispatchers.IO) { dao.getByRun(run) }
 
     override fun updatePaciente(paciente: Paciente) {
         runBlocking(Dispatchers.IO) { dao.update(paciente) }
@@ -34,13 +38,16 @@ class RoomPacienteRepository(
     private fun createDefault(): Paciente =
         Paciente(
             id = 0,
-            rut = "20.781.681-7",
+            run = "20781681",
+            runDv = "7",
             primerNombre = "Exequiel",
             segundoNombre = "Raúl",
             apellidoPaterno = "Pulgar",
             apellidoMaterno = "Cerda",
             email = "exequiel.pulgar@gmail.com",
             telefono = "+56 9 9876 1234",
-            fechaNacimiento = "2001-05-25"
+            fechaNacimiento = "2001-05-25",
+            direccion = "Av. Siempreviva 742",
+            passwordHash = ""
         )
 }
