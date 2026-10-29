@@ -2,23 +2,24 @@ package cl.sanaesencia.app.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.ui.graphics.vector.ImageVector
 
-/**
- * Define las rutas de navegación de la app. Cada objeto es una pantalla
- * con su ruta, título y icono opcional para la barra inferior.
- */
 sealed class Screen(
     val route: String,
     val title: String,
     val icon: ImageVector? = null
 ) {
+    object Auth : Screen("auth", "Autenticación")
+    object Home : Screen("home", "Inicio", Icons.Default.Home)
     object Citas : Screen("citas", "Mis Citas", Icons.Default.CalendarMonth)
     object Especialistas : Screen("especialistas", "Especialistas", Icons.Default.MedicalServices)
     object Productos : Screen("productos", "Productos", Icons.Default.ShoppingBag)
+    object Carrito : Screen("carrito", "Carro", Icons.Default.ShoppingCart)
     object Perfil : Screen("perfil", "Mi Perfil", Icons.Default.Person)
 
     object AgendarPaso1 : Screen("agendar_paso1?especialistaId={especialistaId}", "Seleccionar Especialidad") {
@@ -34,11 +35,19 @@ sealed class Screen(
     object ProcesandoPago : Screen("procesando_pago/{citaId}", "Procesando pago") {
         fun createRoute(citaId: Int) = "procesando_pago/$citaId"
     }
+
+    object ProcesandoPagoCarrito : Screen("procesando_pago_carrito", "Procesando pago")
 }
 
-val bottomNavItems = listOf(
+val drawerNavItems = listOf(
+    Screen.Home,
     Screen.Citas,
     Screen.Especialistas,
     Screen.Productos,
+    Screen.Carrito,
     Screen.Perfil
+)
+
+val bottomNavItems = listOf(
+    Screen.Home
 )

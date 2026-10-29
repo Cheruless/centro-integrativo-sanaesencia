@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.EventBusy
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
@@ -22,18 +23,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-
 import cl.sanaesencia.app.domain.model.Cita
 import cl.sanaesencia.app.domain.model.EstadoCita
 
-/**
- * Pantalla principal: lista de citas del paciente con filtros por estado.
- * Acciones disponibles: agendar nueva cita, confirmar pendientes (pago mock) y cancelar.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CitasScreen(
     viewModel: CitaViewModel,
+    onMenuClick: () -> Unit = {},
     onAgendarCitaClick: () -> Unit = {},
     onConfirmarClick: (Cita) -> Unit = {}
 ) {
@@ -62,6 +59,16 @@ fun CitasScreen(
     }
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Mis Citas") },
+                navigationIcon = {
+                    IconButton(onClick = onMenuClick) {
+                        Icon(imageVector = Icons.Default.Menu, contentDescription = "Menú")
+                    }
+                }
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
@@ -230,10 +237,6 @@ fun CitasScreen(
     }
 }
 
-/**
- * Tarjeta de una cita: muestra fecha, hora, servicio, especialista, precio y estado.
- * En estado PENDIENTE ofrece botones Confirmar y Cancelar.
- */
 @Composable
 fun CitaCard(
     cita: Cita,
@@ -351,7 +354,6 @@ fun CitaCard(
     }
 }
 
-/** Chip de color con icono que representa el estado de la cita (Pendiente, Confirmada, etc.). */
 @Composable
 fun EstadoChip(estado: EstadoCita) {
     val (bgColor, textColor, label, icon) = when (estado) {
