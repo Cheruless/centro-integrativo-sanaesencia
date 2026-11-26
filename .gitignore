@@ -14,3 +14,7 @@
 .cxx
 local.properties
 .mimocode/
+
+# Firma release (no versionar keystore ni credenciales)
+*.jks
+*.keystore

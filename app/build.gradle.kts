@@ -1,9 +1,29 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     kotlin("android")
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
+
+// Credenciales de firma leídas desde local.properties (no versionado).
+// Si faltan, release se genera sin firmar en vez de romper el build.
+val propiedadesLocales = Properties().apply {
+    val archivo = rootProject.file("local.properties")
+    if (archivo.exists()) archivo.inputStream().use { load(it) }
+}
+
+val rutaKeystore = propiedadesLocales.getProperty("sanaesencia.storeFile")
+val claveKeystore = propiedadesLocales.getProperty("sanaesencia.storePassword")
+val aliasKeystore = propiedadesLocales.getProperty("sanaesencia.keyAlias")
+val claveAlias = propiedadesLocales.getProperty("sanaesencia.keyPassword")
+
+val firmaDisponible = !rutaKeystore.isNullOrBlank() &&
+    !claveKeystore.isNullOrBlank() &&
+    !aliasKeystore.isNullOrBlank() &&
+    !claveAlias.isNullOrBlank() &&
+    rootProject.file(rutaKeystore).exists()
 
 android {
     namespace = "cl.sanaesencia.app"
@@ -25,6 +45,14 @@ android {
         release {
             optimization {
                 enable = false
+            }
+            if (firmaDisponible) {
+                signingConfig = signingConfigs.create("release") {
+                    storeFile = rootProject.file(rutaKeystore!!)
+                    storePassword = claveKeystore
+                    keyAlias = aliasKeystore
+                    keyPassword = claveAlias
+                }
             }
         }
     }
