@@ -153,6 +153,57 @@ class SanaesenciaBusinessRulesTest {
     }
 
     @Test
+    fun agregarOIncrementar_mismoProductoSumaCantidad() = runBlocking {
+        val repository = RoomCarritoRepository(FakeCarritoDao(), FakeProductoDao(emptyList()))
+
+        repository.agregarOIncrementar(1, "Aceite Esencial", 10000.0, null, 2)
+        repository.agregarOIncrementar(1, "Aceite Esencial", 10000.0, null, 3)
+
+        val carrito = repository.obtenerCarrito()
+        assertEquals(1, carrito.size)
+        assertEquals(5, carrito.first().cantidad)
+    }
+
+    @Test
+    fun comprarProductos_productoInexistente_retornaFalse() = runBlocking {
+        val carritoDao = FakeCarritoDao()
+        val repository = RoomCarritoRepository(carritoDao, FakeProductoDao(emptyList()))
+        carritoDao.insertarItem(ItemCarrito(productoId = 99, nombreProducto = "Fantasma", precio = 1000.0, cantidad = 1))
+
+        assertFalse(repository.comprarProductos())
+        assertEquals(1, carritoDao.obtenerCarrito().size)
+    }
+
+    @Test
+    fun comprarProductos_stockInsuficienteEnUnItem_noDescuentaNingunProducto() = runBlocking {
+        val productoDao = FakeProductoDao(
+            listOf(
+                Producto(id = 1, nombre = "A", descripcion = "", precio = 1000.0, categoriaEspecialidad = "X", stock = 5),
+                Producto(id = 2, nombre = "B", descripcion = "", precio = 2000.0, categoriaEspecialidad = "X", stock = 1)
+            )
+        )
+        val carritoDao = FakeCarritoDao()
+        val repository = RoomCarritoRepository(carritoDao, productoDao)
+        carritoDao.insertarItem(ItemCarrito(productoId = 1, nombreProducto = "A", precio = 1000.0, cantidad = 2))
+        carritoDao.insertarItem(ItemCarrito(productoId = 2, nombreProducto = "B", precio = 2000.0, cantidad = 3))
+
+        assertFalse(repository.comprarProductos())
+        assertEquals(5, productoDao.getById(1)?.stock)
+        assertEquals(1, productoDao.getById(2)?.stock)
+    }
+
+    @Test
+    fun vaciarCarrito_eliminaTodosLosItems() = runBlocking {
+        val carritoDao = FakeCarritoDao()
+        val repository = RoomCarritoRepository(carritoDao, FakeProductoDao(emptyList()))
+        carritoDao.insertarItem(ItemCarrito(productoId = 1, nombreProducto = "A", precio = 1000.0, cantidad = 1))
+
+        repository.vaciarCarrito()
+
+        assertTrue(repository.obtenerCarrito().isEmpty())
+    }
+
+    @Test
     fun agendarCita_creaCitaYBloqueaHorarioEspecialista() = runBlocking {
         val especialista = Especialista(
             id = 1,
